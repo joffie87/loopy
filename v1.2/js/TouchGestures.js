@@ -9,6 +9,12 @@ TOUCH GESTURES
 window.TouchGestures = {};
 TouchGestures.init = function(loopy){
 
+	// Early exit if dependencies not available
+	if(typeof _getTotalOffset === 'undefined' || typeof _PADDING === 'undefined'){
+		console.warn('TouchGestures: Dependencies not available, skipping initialization');
+		return;
+	}
+
 	var self = {};
 
 	// Configuration
@@ -41,39 +47,46 @@ TouchGestures.init = function(loopy){
 
 	// Helper: Convert touch to canvas coordinates
 	var _getTouchCanvasCoords = function(touch){
-		var canvasses = document.getElementById("canvasses");
-		var offset = _getTotalOffset(canvasses);
-		var x = touch.clientX - offset.left;
-		var y = touch.clientY - offset.top;
+		try {
+			var canvasses = document.getElementById("canvasses");
+			if(!canvasses) return {x: 0, y: 0};
 
-		// Apply camera transforms (same as Mouse.js)
-		var tx = 0;
-		var ty = 0;
-		var s = 1/loopy.offsetScale;
-		var CW = canvasses.clientWidth - _PADDING - _PADDING;
-		var CH = canvasses.clientHeight - _PADDING_BOTTOM - _PADDING;
+			var offset = _getTotalOffset(canvasses);
+			var x = touch.clientX - offset.left;
+			var y = touch.clientY - offset.top;
 
-		if(loopy.embedded){
-			tx -= _PADDING/2;
-			ty -= _PADDING/2;
+			// Apply camera transforms (same as Mouse.js)
+			var tx = 0;
+			var ty = 0;
+			var s = 1/loopy.offsetScale;
+			var CW = canvasses.clientWidth - _PADDING - _PADDING;
+			var CH = canvasses.clientHeight - _PADDING_BOTTOM - _PADDING;
+
+			if(loopy.embedded){
+				tx -= _PADDING/2;
+				ty -= _PADDING/2;
+			}
+
+			tx -= (CW+_PADDING)/2;
+			ty -= (CH+_PADDING)/2;
+
+			tx = s*tx;
+			ty = s*ty;
+
+			tx += (CW+_PADDING)/2;
+			ty += (CH+_PADDING)/2;
+
+			tx -= loopy.offsetX;
+			ty -= loopy.offsetY;
+
+			return {
+				x: x*s + tx,
+				y: y*s + ty
+			};
+		} catch(e) {
+			console.error('TouchGestures: Error in coordinate conversion', e);
+			return {x: 0, y: 0};
 		}
-
-		tx -= (CW+_PADDING)/2;
-		ty -= (CH+_PADDING)/2;
-
-		tx = s*tx;
-		ty = s*ty;
-
-		tx += (CW+_PADDING)/2;
-		ty += (CH+_PADDING)/2;
-
-		tx -= loopy.offsetX;
-		ty -= loopy.offsetY;
-
-		return {
-			x: x*s + tx,
-			y: y*s + ty
-		};
 	};
 
 	// Cancel any pending timers
@@ -88,6 +101,7 @@ TouchGestures.init = function(loopy){
 
 	// Create a node at the given position
 	var _createNodeAtPosition = function(x, y){
+		if(!loopy.model) return;
 		var config = {
 			x: x,
 			y: y
@@ -117,116 +131,128 @@ TouchGestures.init = function(loopy){
 
 	// Handle touch start
 	var _onTouchStart = function(event){
-		// Only handle in pen mode
-		if(!_isInPenMode()) return;
+		try {
+			// Only handle in pen mode
+			if(!_isInPenMode()) return;
 
-		// Ignore multi-touch (let camera handle it)
-		if(event.touches.length !== 1) return;
+			// Ignore multi-touch (let camera handle it)
+			if(event.touches.length !== 1) return;
 
-		var touch = event.touches[0];
-		var coords = _getTouchCanvasCoords(touch);
-		var now = Date.now();
+			var touch = event.touches[0];
+			var coords = _getTouchCanvasCoords(touch);
+			var now = Date.now();
 
-		touchStartX = coords.x;
-		touchStartY = coords.y;
+			touchStartX = coords.x;
+			touchStartY = coords.y;
 
-		// Check if this is a second tap (potential double tap)
-		var timeSinceLastTap = now - lastTapTime;
-		var distanceFromLastTap = _getDistance(coords.x, coords.y, lastTapX, lastTapY);
+			// Check if this is a second tap (potential double tap)
+			var timeSinceLastTap = now - lastTapTime;
+			var distanceFromLastTap = _getDistance(coords.x, coords.y, lastTapX, lastTapY);
 
-		if(timeSinceLastTap < DOUBLE_TAP_DELAY && distanceFromLastTap < DOUBLE_TAP_DISTANCE){
-			// This is the second tap of a double tap
-			// Start long press timer
-			longPressTimer = setTimeout(function(){
-				isLongPressActive = true;
-				_startDrawingFromLongPress(coords.x, coords.y);
-			}, LONG_PRESS_DELAY);
+			if(timeSinceLastTap < DOUBLE_TAP_DELAY && distanceFromLastTap < DOUBLE_TAP_DISTANCE){
+				// This is the second tap of a double tap
+				// Start long press timer
+				longPressTimer = setTimeout(function(){
+					isLongPressActive = true;
+					_startDrawingFromLongPress(coords.x, coords.y);
+				}, LONG_PRESS_DELAY);
 
-			// Reset double tap tracking
-			lastTapTime = 0;
-			lastTapX = 0;
-			lastTapY = 0;
-		} else {
-			// This is a first tap
-			lastTapTime = now;
-			lastTapX = coords.x;
-			lastTapY = coords.y;
+				// Reset double tap tracking
+				lastTapTime = 0;
+				lastTapX = 0;
+				lastTapY = 0;
+			} else {
+				// This is a first tap
+				lastTapTime = now;
+				lastTapX = coords.x;
+				lastTapY = coords.y;
+			}
+		} catch(e) {
+			console.error('TouchGestures: Error in touchstart', e);
 		}
 	};
 
 	// Handle touch move
 	var _onTouchMove = function(event){
-		// Only handle in pen mode
-		if(!_isInPenMode()) return;
+		try {
+			// Only handle in pen mode
+			if(!_isInPenMode()) return;
 
-		// Ignore multi-touch
-		if(event.touches.length !== 1){
-			_cancelGestures();
-			return;
-		}
-
-		var touch = event.touches[0];
-		var coords = _getTouchCanvasCoords(touch);
-
-		// If we're drawing from long press, update the stroke
-		if(isDrawingFromLongPress){
-			Mouse.x = coords.x;
-			Mouse.y = coords.y;
-			Mouse.moved = true;
-
-			if(loopy.ink){
-				loopy.ink.drawInk();
-			}
-			return;
-		}
-
-		// If waiting for long press, check if movement cancels it
-		if(longPressTimer){
-			var distance = _getDistance(coords.x, coords.y, touchStartX, touchStartY);
-			if(distance > MOVEMENT_THRESHOLD){
+			// Ignore multi-touch
+			if(event.touches.length !== 1){
 				_cancelGestures();
+				return;
 			}
+
+			var touch = event.touches[0];
+			var coords = _getTouchCanvasCoords(touch);
+
+			// If we're drawing from long press, update the stroke
+			if(isDrawingFromLongPress){
+				Mouse.x = coords.x;
+				Mouse.y = coords.y;
+				Mouse.moved = true;
+
+				if(loopy.ink){
+					loopy.ink.drawInk();
+				}
+				return;
+			}
+
+			// If waiting for long press, check if movement cancels it
+			if(longPressTimer){
+				var distance = _getDistance(coords.x, coords.y, touchStartX, touchStartY);
+				if(distance > MOVEMENT_THRESHOLD){
+					_cancelGestures();
+				}
+			}
+		} catch(e) {
+			console.error('TouchGestures: Error in touchmove', e);
 		}
 	};
 
 	// Handle touch end
 	var _onTouchEnd = function(event){
-		// Only handle in pen mode
-		if(!_isInPenMode()) return;
+		try {
+			// Only handle in pen mode
+			if(!_isInPenMode()) return;
 
-		var coords = null;
-		if(event.changedTouches && event.changedTouches[0]){
-			coords = _getTouchCanvasCoords(event.changedTouches[0]);
-		}
-
-		// If we were drawing from long press, finalize the stroke
-		if(isDrawingFromLongPress){
-			Mouse.pressed = false;
-			Mouse.startedOnTarget = false;
-
-			// Finalize the ink stroke (trigger mouseup logic)
-			if(loopy.ink && loopy.ink.strokeData.length >= 2 && Mouse.moved){
-				publish("mouseup");
+			var coords = null;
+			if(event.changedTouches && event.changedTouches[0]){
+				coords = _getTouchCanvasCoords(event.changedTouches[0]);
 			}
 
+			// If we were drawing from long press, finalize the stroke
+			if(isDrawingFromLongPress){
+				Mouse.pressed = false;
+				Mouse.startedOnTarget = false;
+
+				// Finalize the ink stroke (trigger mouseup logic)
+				if(loopy.ink && loopy.ink.strokeData.length >= 2 && Mouse.moved){
+					publish("mouseup");
+				}
+
+				_cancelGestures();
+				return;
+			}
+
+			// If long press timer is still running, it means finger lifted before long press
+			// This is a plain double tap - create a node
+			if(longPressTimer){
+				clearTimeout(longPressTimer);
+				longPressTimer = null;
+
+				if(coords){
+					_createNodeAtPosition(coords.x, coords.y);
+				}
+				return;
+			}
+
+			// Clean up
 			_cancelGestures();
-			return;
+		} catch(e) {
+			console.error('TouchGestures: Error in touchend', e);
 		}
-
-		// If long press timer is still running, it means finger lifted before long press
-		// This is a plain double tap - create a node
-		if(longPressTimer){
-			clearTimeout(longPressTimer);
-			longPressTimer = null;
-
-			if(coords){
-				_createNodeAtPosition(coords.x, coords.y);
-			}
-			return;
-		}
-
-		// Clean up
-		_cancelGestures();
 	};
 
 	// Attach listeners to canvasses element
@@ -235,6 +261,9 @@ TouchGestures.init = function(loopy){
 		canvasses.addEventListener("touchstart", _onTouchStart, {passive: true});
 		canvasses.addEventListener("touchmove", _onTouchMove, {passive: true});
 		canvasses.addEventListener("touchend", _onTouchEnd, {passive: true});
+		console.log('TouchGestures: Initialized successfully');
+	} else {
+		console.warn('TouchGestures: canvasses element not found');
 	}
 
 	return self;
