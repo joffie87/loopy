@@ -24,12 +24,9 @@ canvas{
 #canvasses{
 	position:absolute;
 	top:0; left:0;
-	width: 100%; /* Full width when sidebar is hidden */
+	width: 100%; /* Always full width - sidebar overlays on top */
 	height: 100%;
-	transition: width 0.3s ease-in-out;
-}
-body:has(#sidebar[hidden=no]) #canvasses{
-	width: calc(100% - 300px); /* Adjust when sidebar is visible */
+	pointer-events: auto; /* Enable pointer events on canvas */
 }
 #canvasses[fullscreen=yes]{
 	width: 100%;

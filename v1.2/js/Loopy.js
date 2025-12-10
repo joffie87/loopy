@@ -33,6 +33,9 @@ function Loopy(config){
 	// Camera (zoom & pan)
 	Camera.init(self, document.getElementById("canvasses"));
 
+	// Touch Gestures (double tap & long press for pen mode)
+	TouchGestures.init(self);
+
 	// Model
 	self.model = new Model(self);
 
