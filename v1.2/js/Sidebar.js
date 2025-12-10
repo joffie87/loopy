@@ -208,33 +208,6 @@ function Sidebar(loopy){
 		}
 	});
 
-	// Sidebar toggle functionality
-	(function(){
-		var toggle = document.getElementById("sidebar_toggle");
-		var sidebar = document.getElementById("sidebar");
-		var isVisible = false;
-
-		if(!toggle || !sidebar){
-			console.error("Sidebar toggle or sidebar element not found!");
-			return;
-		}
-
-		// Set initial state
-		toggle.setAttribute("data-hidden", "yes");
-		toggle.innerHTML = "◀";
-
-		toggle.onclick = function(){
-			isVisible = !isVisible;
-			sidebar.setAttribute("data-visible", isVisible ? "yes" : "no");
-			toggle.setAttribute("data-hidden", isVisible ? "no" : "yes");
-			toggle.innerHTML = isVisible ? "▶" : "◀";
-
-			// No need to resize canvas - sidebar overlays on top
-		};
-
-		console.log("Sidebar toggle initialized");
-	})();
-
 }
 
 function SidebarPage(){
