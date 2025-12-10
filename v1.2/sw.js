@@ -9,8 +9,8 @@
  * - Old caches are automatically cleared on activation
  */
 
-const CACHE_VERSION = 'loopy-pwa-v1.2.1';
-const RUNTIME_CACHE = 'loopy-runtime-v1.2.1';
+const CACHE_VERSION = 'loopy-pwa-v1.2.2';
+const RUNTIME_CACHE = 'loopy-runtime-v1.2.2';
 
 /**
  * Core assets to precache on install
