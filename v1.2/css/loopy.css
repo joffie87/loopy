@@ -166,6 +166,7 @@ div[big=yes] .play_button_label{
 
 	/* Auto-hide functionality */
 	transition: right 0.3s ease-in-out;
+	z-index: 999; /* Ensure sidebar is above canvas */
 }
 #sidebar[hidden=yes]{
 	right: -300px;
