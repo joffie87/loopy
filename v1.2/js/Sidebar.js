@@ -225,8 +225,7 @@ function Sidebar(loopy){
 			toggle.setAttribute("data-hidden", isHidden ? "yes" : "no");
 			toggle.innerHTML = isHidden ? "◀" : "▶";
 
-			// Also trigger resize event so canvas adjusts
-			publish("resize");
+			// No need to resize canvas - sidebar overlays on top
 		};
 
 		console.log("Sidebar toggle initialized");
