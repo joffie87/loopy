@@ -28,7 +28,6 @@ canvas{
 	height: 100%;
 	transition: width 0.3s ease-in-out;
 }
-#sidebar[hidden=no] ~ #canvasses,
 body:has(#sidebar[hidden=no]) #canvasses{
 	width: calc(100% - 300px); /* Adjust when sidebar is visible */
 }
@@ -171,6 +170,9 @@ div[big=yes] .play_button_label{
 #sidebar[hidden=yes]{
 	right: -300px;
 }
+#sidebar[hidden=no]{
+	right: 0;
+}
 #sidebar_toggle{
 	position: fixed;
 	right: 0;
@@ -189,7 +191,7 @@ div[big=yes] .play_button_label{
 	transition: right 0.3s ease-in-out, background 0.2s;
 	z-index: 1000;
 }
-#sidebar[hidden=no] ~ #sidebar_toggle{
+#sidebar_toggle[data-hidden=no]{
 	right: 300px;
 }
 #sidebar_toggle:hover{

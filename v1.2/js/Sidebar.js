@@ -214,11 +214,22 @@ function Sidebar(loopy){
 		var sidebar = document.getElementById("sidebar");
 		var isHidden = true;
 
+		if(!toggle || !sidebar){
+			console.error("Sidebar toggle or sidebar element not found!");
+			return;
+		}
+
 		toggle.onclick = function(){
 			isHidden = !isHidden;
 			sidebar.setAttribute("hidden", isHidden ? "yes" : "no");
+			toggle.setAttribute("data-hidden", isHidden ? "yes" : "no");
 			toggle.innerHTML = isHidden ? "◀" : "▶";
+
+			// Also trigger resize event so canvas adjusts
+			publish("resize");
 		};
+
+		console.log("Sidebar toggle initialized");
 	})();
 
 }
