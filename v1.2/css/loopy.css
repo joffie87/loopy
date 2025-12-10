@@ -147,7 +147,7 @@ div[big=yes] .play_button_label{
 **********/
 
 #sidebar{
-	position: absolute;
+	position: fixed;
 	top:0; right:0;
 	width: 300px;
 	height: 100%;
@@ -164,6 +164,7 @@ div[big=yes] .play_button_label{
 	/* Auto-hide functionality */
 	transition: right 0.3s ease-in-out;
 	z-index: 999; /* Ensure sidebar is above canvas */
+	overflow-y: auto; /* Allow scrolling if content is too tall */
 }
 #sidebar[hidden=yes]{
 	right: -300px;
