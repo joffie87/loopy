@@ -50,7 +50,7 @@ Camera.init = function(loopy, target){
 		if(!event.altKey) return;
 
 		event.preventDefault();
-		event.stopPropagation();
+		event.stopImmediatePropagation();
 
 		// Get zoom direction
 		var delta = event.deltaY || event.wheelDelta || event.detail;
@@ -94,7 +94,7 @@ Camera.init = function(loopy, target){
 		if(event.button !== 1) return; // Middle button
 
 		event.preventDefault();
-		event.stopPropagation();
+		event.stopImmediatePropagation(); // Prevent other handlers from firing
 
 		self.isPanning = true;
 		self.panButton = event.button;
@@ -116,7 +116,7 @@ Camera.init = function(loopy, target){
 		}
 
 		event.preventDefault();
-		event.stopPropagation();
+		event.stopImmediatePropagation();
 
 		var dx = event.clientX - self.panStartX;
 		var dy = event.clientY - self.panStartY;
