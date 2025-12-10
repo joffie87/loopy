@@ -164,8 +164,8 @@ function Sidebar(loopy){
 		var page = new SidebarPage();
 		page.addComponent(new ComponentHTML({
 			html: ""+
-			
-			"<b style='font-size:1.4em'>LOOPY</b> (v1.1)<br>a tool for thinking in systems<br><br>"+
+
+			"<b style='font-size:1.4em'>LOOPY</b> (v1.2)<br>a tool for thinking in systems<br><br>"+
 
 			"<span class='mini_button' onclick='publish(\"modal\",[\"examples\"])'>see examples</span> "+
 			"<span class='mini_button' onclick='publish(\"modal\",[\"howto\"])'>how to</span> "+
@@ -180,11 +180,22 @@ function Sidebar(loopy){
 			"<span class='mini_button' onclick='publish(\"modal\",[\"save_gif\"])'>make a GIF using LICEcap</span> <br><br>"+
 
 			"<hr/><br>"+
-				
-			"<a target='_blank' href='../'>LOOPY</a> is "+
-			"made by <a target='_blank' href='http://ncase.me'>nicky case</a> "+
-			"with your support <a target='_blank' href='https://www.patreon.com/ncase'>on patreon</a> &lt;3<br><br>"+
-			"<span style='font-size:0.85em'>P.S: go read <a target='_blank' href='https://www.amazon.com/Thinking-Systems-Donella-H-Meadows/dp/1603580557'>Thinking In Systems</a>, thx</span>"
+
+			"<div style='font-size:0.9em; line-height:1.5em;'>"+
+			"<b>v1.2 Update (2025)</b><br>"+
+			"PWA & camera controls by<br>"+
+			"<b>Johnathon Rhoades</b> & <b>Claude Code</b><br>"+
+			"<a target='_blank' href='https://rhoadesit.org'>Rhoades Institute of Technology</a>"+
+			"</div><br>"+
+
+			"<hr/><br>"+
+
+			"<div style='font-size:0.9em; line-height:1.5em;'>"+
+			"<a target='_blank' href='../'>LOOPY</a> original by<br>"+
+			"<a target='_blank' href='http://ncase.me'>nicky case</a> "+
+			"with support <a target='_blank' href='https://www.patreon.com/ncase'>on patreon</a> &lt;3<br><br>"+
+			"<span style='font-size:0.85em'>P.S: go read <a target='_blank' href='https://www.amazon.com/Thinking-Systems-Donella-H-Meadows/dp/1603580557'>Thinking In Systems</a>, thx</span>"+
+			"</div>"
 
 		}));
 		self.addPage("Edit", page);
@@ -196,6 +207,19 @@ function Sidebar(loopy){
 			publish("modal",["save_link"]);
 		}
 	});
+
+	// Sidebar toggle functionality
+	(function(){
+		var toggle = document.getElementById("sidebar_toggle");
+		var sidebar = document.getElementById("sidebar");
+		var isHidden = true;
+
+		toggle.onclick = function(){
+			isHidden = !isHidden;
+			sidebar.setAttribute("hidden", isHidden ? "yes" : "no");
+			toggle.innerHTML = isHidden ? "◀" : "▶";
+		};
+	})();
 
 }
 
