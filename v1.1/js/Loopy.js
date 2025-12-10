@@ -29,7 +29,10 @@ function Loopy(config){
 
 	// Mouse
 	Mouse.init(document.getElementById("canvasses")); // TODO: ugly fix, ew
-	
+
+	// Camera (zoom & pan)
+	Camera.init(self, document.getElementById("canvasses"));
+
 	// Model
 	self.model = new Model(self);
 

@@ -7,10 +7,18 @@ body{
 	font-size: 20px;
 
 	overflow: hidden;
+
+	/* PWA: Prevent default touch behaviors for better mobile experience */
+	touch-action: none;
+	-webkit-user-select: none;
+	user-select: none;
 }
 canvas{
 	position:absolute;
 	top:0; left:0;
+
+	/* PWA: Prevent default touch behaviors on canvas */
+	touch-action: none;
 }
 
 #canvasses{

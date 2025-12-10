@@ -9,6 +9,19 @@
 	<meta charset="utf-8">
 	<link rel="icon" type="image/png" href="favicon.png">
 
+	<!-- PWA: Mobile Viewport -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+
+	<!-- PWA: Theme & Appearance -->
+	<meta name="theme-color" content="#444444">
+	<link rel="manifest" href="manifest.webmanifest">
+
+	<!-- PWA: iOS Support -->
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="apple-mobile-web-app-title" content="Loopy">
+	<link rel="apple-touch-icon" href="icons/icon-192.png">
+
 	<!-- Schema.org markup for Google+ -->
 	<meta itemprop="name" content="LOOPY!">
 	<meta itemprop="description" content="a tool for thinking in systems">
@@ -63,6 +76,7 @@
 <script src="js/minpubsub.js"></script>
 <script src="js/Mouse.js"></script>
 <script src="js/Key.js"></script>
+<script src="js/Camera.js"></script>
 
 <!-- Core Simulation Code -->
 <script src="js/Loopy.js?v=5"></script>
@@ -81,6 +95,34 @@
 <script src="js/Dragger.js"></script>
 <script src="js/Eraser.js"></script>
 <script src="js/Labeller.js"></script>
+
+<!-- PWA: Service Worker Registration -->
+<script>
+if ('serviceWorker' in navigator) {
+	window.addEventListener('load', () => {
+		navigator.serviceWorker.register('./sw.js')
+			.then(registration => {
+				console.log('✓ Service Worker registered:', registration.scope);
+
+				// Check for updates periodically
+				registration.addEventListener('updatefound', () => {
+					const newWorker = registration.installing;
+					console.log('⟳ Service Worker update found');
+
+					newWorker.addEventListener('statechange', () => {
+						if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+							// New version available, notify user (optional)
+							console.log('✓ New version available! Refresh to update.');
+						}
+					});
+				});
+			})
+			.catch(error => {
+				console.error('✗ Service Worker registration failed:', error);
+			});
+	});
+}
+</script>
 
 <!-- Start it -->
 <script>
