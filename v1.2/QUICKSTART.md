@@ -1,11 +1,11 @@
-# 🚀 Loopy PWA Quick Start
+# 🚀 Loopy v1.2 PWA Quick Start
 
 ## Test Locally (5 minutes)
 
 ### Step 1: Serve the App
 ```bash
-# In the v1.1 directory
-cd v1.1
+# In the v1.2 directory
+cd v1.2
 
 # Option A: Node.js (recommended)
 npx serve .
@@ -65,10 +65,10 @@ git push origin main
 
 # 3. Enable GitHub Pages
 # Go to Settings → Pages
-# Set source to main branch, /v1.1 folder
+# Set source to main branch, /v1.2 folder
 
 # 4. Access at:
-# https://[username].github.io/[repo]/v1.1/
+# https://[username].github.io/[repo]/v1.2/
 ```
 
 ---

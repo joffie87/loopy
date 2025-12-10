@@ -1,6 +1,10 @@
-# Loopy PWA Guide
+# Loopy v1.2 PWA Guide
 
 This document explains how to use Loopy as a Progressive Web App (PWA) with offline support and camera controls for zoom/pan.
+
+**Version:** 1.2 (2025)
+**Enhancements by:** Johnathon Rhoades & Claude Code
+**Organization:** Rhoades Institute of Technology
 
 ---
 
