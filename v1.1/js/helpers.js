@@ -135,11 +135,17 @@ function _addMouseEvents(target, onmousedown, onmousemove, onmouseup){
 
 	// WRAP THEM CALLBACKS
 	var _onmousedown = function(event){
+		// Ignore middle mouse button (used for camera pan)
+		if(event.button === 1) return;
+
+		// Ignore when Alt key is pressed (camera controls)
+		if(event.altKey) return;
+
 		var _fakeEvent = _onmousemove(event);
 		onmousedown(_fakeEvent);
 	};
 	var _onmousemove = function(event){
-		
+
 		// Mouse position
 		var _fakeEvent = {};
 		if(event.changedTouches){
@@ -155,6 +161,8 @@ function _addMouseEvents(target, onmousedown, onmousemove, onmouseup){
 		}
 
 		// Mousemove callback
+		// Note: We still track mouse position for camera transforms,
+		// but actual tool interactions are blocked by the mousedown filter
 		onmousemove(_fakeEvent);
 		return _fakeEvent;
 
