@@ -7,7 +7,7 @@ Mouse.init = function(target){
 		var toggle = document.getElementById("sidebar_toggle");
 
 		// Check if sidebar is visible
-		if(sidebar && sidebar.getAttribute("hidden") === "no"){
+		if(sidebar && sidebar.getAttribute("data-visible") === "yes"){
 			var rect = sidebar.getBoundingClientRect();
 			if(clientX >= rect.left && clientX <= rect.right &&
 			   clientY >= rect.top && clientY <= rect.bottom){

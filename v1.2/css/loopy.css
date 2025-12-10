@@ -166,10 +166,10 @@ div[big=yes] .play_button_label{
 	z-index: 999; /* Ensure sidebar is above canvas */
 	overflow-y: auto; /* Allow scrolling if content is too tall */
 }
-#sidebar[hidden=yes]{
+#sidebar[data-visible=no]{
 	right: -300px;
 }
-#sidebar[hidden=no]{
+#sidebar[data-visible=yes]{
 	right: 0;
 }
 #sidebar_toggle{

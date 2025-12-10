@@ -212,7 +212,7 @@ function Sidebar(loopy){
 	(function(){
 		var toggle = document.getElementById("sidebar_toggle");
 		var sidebar = document.getElementById("sidebar");
-		var isHidden = true;
+		var isVisible = false;
 
 		if(!toggle || !sidebar){
 			console.error("Sidebar toggle or sidebar element not found!");
@@ -224,10 +224,10 @@ function Sidebar(loopy){
 		toggle.innerHTML = "◀";
 
 		toggle.onclick = function(){
-			isHidden = !isHidden;
-			sidebar.setAttribute("hidden", isHidden ? "yes" : "no");
-			toggle.setAttribute("data-hidden", isHidden ? "yes" : "no");
-			toggle.innerHTML = isHidden ? "◀" : "▶";
+			isVisible = !isVisible;
+			sidebar.setAttribute("data-visible", isVisible ? "yes" : "no");
+			toggle.setAttribute("data-hidden", isVisible ? "no" : "yes");
+			toggle.innerHTML = isVisible ? "▶" : "◀";
 
 			// No need to resize canvas - sidebar overlays on top
 		};
