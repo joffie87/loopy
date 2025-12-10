@@ -219,6 +219,10 @@ function Sidebar(loopy){
 			return;
 		}
 
+		// Set initial state
+		toggle.setAttribute("data-hidden", "yes");
+		toggle.innerHTML = "◀";
+
 		toggle.onclick = function(){
 			isHidden = !isHidden;
 			sidebar.setAttribute("hidden", isHidden ? "yes" : "no");
