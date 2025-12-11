@@ -42,6 +42,11 @@ TouchGestures.init = function(loopy){
 	var longPressStartY = 0;
 	var longPressTarget = null; // node or link being long-pressed
 
+	// Edge dragging state
+	var draggingEdge = null;
+	var edgeDragOffsetX = 0;
+	var edgeDragOffsetY = 0;
+
 	// Pinch/pan state
 	var initialPinchDistance = 0;
 	var initialScale = 1;
@@ -119,23 +124,43 @@ TouchGestures.init = function(loopy){
 	 * Find edge at given canvas coordinates
 	 */
 	var _getEdgeAtPoint = function(canvasX, canvasY){
-		// Check all edges
-		for(var i=0; i<loopy.model.edges.length; i++){
-			var edge = loopy.model.edges[i];
-			// Simple distance check to edge midpoint
-			// TODO: More accurate edge hit detection
-			var fromNode = loopy.model.getNode(edge.from);
-			var toNode = loopy.model.getNode(edge.to);
-			if(!fromNode || !toNode) continue;
+		return loopy.model.getEdgeByPoint(canvasX, canvasY);
+	};
 
-			var midX = (fromNode.x + toNode.x) / 2;
-			var midY = (fromNode.y + toNode.y) / 2;
-			var dist = _getDistance(canvasX, canvasY, midX, midY);
-			if(dist < 30){ // 30px hit radius
-				return edge;
-			}
+	/**
+	 * Update edge arc based on drag position (from Dragger.js logic)
+	 */
+	var _updateEdgeArc = function(edge, labelX, labelY){
+		if(edge.from !== edge.to){
+			// Regular edge between two different nodes
+			var fx = edge.from.x, fy = edge.from.y;
+			var tx = edge.to.x, ty = edge.to.y;
+			var dx = tx - fx, dy = ty - fy;
+			var a = Math.atan2(dy, dx);
+
+			// Calculate arc from label position
+			var points = [[labelX, labelY]];
+			var translated = _translatePoints(points, -fx, -fy);
+			var rotated = _rotatePoints(translated, -a);
+			var newLabelPoint = rotated[0];
+
+			// Update arc (negative because of coordinate system)
+			edge.arc = -newLabelPoint[1];
+		} else {
+			// Self-arrow: get angle & magnitude from label position
+			var dx = labelX - edge.from.x;
+			var dy = labelY - edge.from.y;
+			var a = Math.atan2(dy, dx);
+			var mag = Math.sqrt(dx*dx + dy*dy);
+
+			// Minimum magnitude
+			var minimum = edge.from.radius + 25;
+			if(mag < minimum) mag = minimum;
+
+			// Update edge
+			edge.arc = mag;
+			edge.rotation = a * (360 / Math.TAU) + 90;
 		}
-		return null;
 	};
 
 	/**
@@ -147,6 +172,7 @@ TouchGestures.init = function(loopy){
 			longPressTimer = null;
 		}
 		longPressTarget = null;
+		draggingEdge = null;
 	};
 
 	/**
@@ -223,7 +249,7 @@ TouchGestures.init = function(loopy){
 			var edge = !node ? _getEdgeAtPoint(coords.x, coords.y) : null;
 			var target = node || edge;
 
-			// Start long-press timer if on a node
+			// Start long-press timer for nodes or edges
 			if(node){
 				longPressStartX = coords.x;
 				longPressStartY = coords.y;
@@ -234,6 +260,21 @@ TouchGestures.init = function(loopy){
 					longPressTimer = null; // Clear timer so movement isn't cancelled
 					TouchMode.setState(TouchMode.STATE.MOVING_NODE);
 					console.log('TouchGestures: Long press activated - now moving node:', longPressTarget);
+				}, LONG_PRESS_DELAY);
+			}
+			else if(edge){
+				longPressStartX = coords.x;
+				longPressStartY = coords.y;
+				longPressTarget = edge; // Store edge as target
+
+				longPressTimer = setTimeout(function(){
+					// Long press triggered - enter edge edit mode
+					longPressTimer = null; // Clear timer so movement isn't cancelled
+					draggingEdge = edge;
+					edgeDragOffsetX = longPressStartX - edge.labelX;
+					edgeDragOffsetY = longPressStartY - edge.labelY;
+					TouchMode.setState(TouchMode.STATE.EDITING_EDGE);
+					console.log('TouchGestures: Long press activated - now editing edge:', draggingEdge);
 				}, LONG_PRESS_DELAY);
 			}
 
@@ -304,26 +345,34 @@ TouchGestures.init = function(loopy){
 			return;
 		}
 
-		// SINGLE-FINGER: Move node or create link
+		// SINGLE-FINGER: Move node, edit edge, or create link
 		if(touches.length === 1){
 			var touch = touches[0];
 			var coords = _clientToCanvas(touch.clientX, touch.clientY);
 
+			// If in EDITING_EDGE state, adjust the arc
+			if(TouchMode.isState(TouchMode.STATE.EDITING_EDGE) && draggingEdge){
+				var labelX = coords.x - edgeDragOffsetX;
+				var labelY = coords.y - edgeDragOffsetY;
+				_updateEdgeArc(draggingEdge, labelX, labelY);
+				loopy.model.update();
+				publish("model/changed");
+				publish("mousemove"); // Trigger redraw
+			}
+			// If in MOVING_NODE state, move the node
+			else if(TouchMode.isState(TouchMode.STATE.MOVING_NODE) && longPressTarget){
+				longPressTarget.x = coords.x;
+				longPressTarget.y = coords.y;
+				publish("model/changed");
+				publish("mousemove"); // Trigger redraw
+			}
 			// Check if we've moved enough to cancel long-press
-			if(longPressTimer){
+			else if(longPressTimer){
 				var dist = _getDistance(coords.x, coords.y, longPressStartX, longPressStartY);
 				if(dist > MOVEMENT_THRESHOLD){
 					console.log('TouchGestures: Movement exceeded threshold, canceling long-press');
 					_cancelGestures();
 				}
-			}
-
-			// If in MOVING_NODE state, move the node
-			if(TouchMode.isState(TouchMode.STATE.MOVING_NODE) && longPressTarget){
-				longPressTarget.x = coords.x;
-				longPressTarget.y = coords.y;
-				publish("model/changed");
-				publish("mousemove"); // Trigger redraw
 			}
 
 			event.preventDefault();
@@ -348,6 +397,15 @@ TouchGestures.init = function(loopy){
 		if(touches.length === 0){
 			var changedTouch = event.changedTouches[0];
 			var coords = _clientToCanvas(changedTouch.clientX, changedTouch.clientY);
+
+			// If we were editing an edge, finalize it
+			if(TouchMode.isState(TouchMode.STATE.EDITING_EDGE)){
+				console.log('TouchGestures: Finished editing edge');
+				publish("mousemove"); // Final redraw
+				TouchMode.resetState();
+				_cancelGestures();
+				return;
+			}
 
 			// If we were moving a node, finalize it
 			if(TouchMode.isState(TouchMode.STATE.MOVING_NODE)){
