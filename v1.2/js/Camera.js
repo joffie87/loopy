@@ -43,8 +43,12 @@ Camera.init = function(loopy, target){
 	/**
 	 * Handle mouse wheel events for zoom
 	 * Alt + Wheel = Zoom in/out (centered on cursor)
+	 * Desktop only - disabled in touch mode
 	 */
 	self.onWheel = function(event){
+
+		// Skip in touch mode (TouchGestures handles all touch input)
+		if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode) return;
 
 		// Only handle if Alt key is pressed
 		if(!event.altKey) return;
@@ -86,8 +90,12 @@ Camera.init = function(loopy, target){
 	/**
 	 * Handle middle mouse button pan
 	 * Alt + Middle-drag = Pan the canvas
+	 * Desktop only - disabled in touch mode
 	 */
 	self.onMouseDown = function(event){
+
+		// Skip in touch mode (TouchGestures handles all touch input)
+		if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode) return;
 
 		// Only handle if Alt key is pressed and middle button (button 1)
 		if(!event.altKey) return;
@@ -154,8 +162,12 @@ Camera.init = function(loopy, target){
 
 	/**
 	 * Handle touch events for pinch zoom and multi-finger pan
+	 * Fallback only - disabled when TouchMode is active
 	 */
 	self.onTouchStart = function(event){
+
+		// Skip in touch mode (TouchGestures handles all touch input)
+		if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode) return;
 
 		// Store all active touches
 		self.touches = Array.from(event.touches);
@@ -177,6 +189,9 @@ Camera.init = function(loopy, target){
 	};
 
 	self.onTouchMove = function(event){
+
+		// Skip in touch mode (TouchGestures handles all touch input)
+		if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode) return;
 
 		self.touches = Array.from(event.touches);
 
@@ -244,6 +259,9 @@ Camera.init = function(loopy, target){
 	};
 
 	self.onTouchEnd = function(event){
+
+		// Skip in touch mode (TouchGestures handles all touch input)
+		if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode) return;
 
 		self.touches = Array.from(event.touches);
 
