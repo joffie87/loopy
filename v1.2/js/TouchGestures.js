@@ -128,6 +128,13 @@ TouchGestures.init = function(loopy){
 	};
 
 	/**
+	 * Find label at given canvas coordinates
+	 */
+	var _getLabelAtPoint = function(canvasX, canvasY){
+		return loopy.model.getLabelByPoint(canvasX, canvasY);
+	};
+
+	/**
 	 * Update edge arc based on drag position (from Dragger.js logic)
 	 */
 	var _updateEdgeArc = function(edge, labelX, labelY){
@@ -244,12 +251,13 @@ TouchGestures.init = function(loopy){
 			var touch = touches[0];
 			var coords = _clientToCanvas(touch.clientX, touch.clientY);
 
-			// Check if tapping on an object
+			// Check if tapping on an object (priority: nodes > labels > edges)
 			var node = _getNodeAtPoint(coords.x, coords.y);
-			var edge = !node ? _getEdgeAtPoint(coords.x, coords.y) : null;
-			var target = node || edge;
+			var label = !node ? _getLabelAtPoint(coords.x, coords.y) : null;
+			var edge = (!node && !label) ? _getEdgeAtPoint(coords.x, coords.y) : null;
+			var target = node || label || edge;
 
-			// Start long-press timer for nodes or edges
+			// Start long-press timer for nodes, labels, or edges
 			if(node){
 				longPressStartX = coords.x;
 				longPressStartY = coords.y;
@@ -260,6 +268,18 @@ TouchGestures.init = function(loopy){
 					longPressTimer = null; // Clear timer so movement isn't cancelled
 					TouchMode.setState(TouchMode.STATE.MOVING_NODE);
 					console.log('TouchGestures: Long press activated - now moving node:', longPressTarget);
+				}, LONG_PRESS_DELAY);
+			}
+			else if(label){
+				longPressStartX = coords.x;
+				longPressStartY = coords.y;
+				longPressTarget = label; // Store label as target
+
+				longPressTimer = setTimeout(function(){
+					// Long press triggered - enter label move mode
+					longPressTimer = null; // Clear timer so movement isn't cancelled
+					TouchMode.setState(TouchMode.STATE.MOVING_LABEL);
+					console.log('TouchGestures: Long press activated - now moving label:', longPressTarget);
 				}, LONG_PRESS_DELAY);
 			}
 			else if(edge){
@@ -345,7 +365,7 @@ TouchGestures.init = function(loopy){
 			return;
 		}
 
-		// SINGLE-FINGER: Move node, edit edge, or create link
+		// SINGLE-FINGER: Move node, move label, edit edge, or create link
 		if(touches.length === 1){
 			var touch = touches[0];
 			var coords = _clientToCanvas(touch.clientX, touch.clientY);
@@ -363,6 +383,14 @@ TouchGestures.init = function(loopy){
 			else if(TouchMode.isState(TouchMode.STATE.MOVING_NODE) && longPressTarget){
 				longPressTarget.x = coords.x;
 				longPressTarget.y = coords.y;
+				publish("model/changed");
+				publish("mousemove"); // Trigger redraw
+			}
+			// If in MOVING_LABEL state, move the label
+			else if(TouchMode.isState(TouchMode.STATE.MOVING_LABEL) && longPressTarget){
+				longPressTarget.x = coords.x;
+				longPressTarget.y = coords.y;
+				loopy.model.update();
 				publish("model/changed");
 				publish("mousemove"); // Trigger redraw
 			}
@@ -401,6 +429,15 @@ TouchGestures.init = function(loopy){
 			// If we were editing an edge, finalize it
 			if(TouchMode.isState(TouchMode.STATE.EDITING_EDGE)){
 				console.log('TouchGestures: Finished editing edge');
+				publish("mousemove"); // Final redraw
+				TouchMode.resetState();
+				_cancelGestures();
+				return;
+			}
+
+			// If we were moving a label, finalize it
+			if(TouchMode.isState(TouchMode.STATE.MOVING_LABEL)){
+				console.log('TouchGestures: Finished moving label');
 				publish("mousemove"); // Final redraw
 				TouchMode.resetState();
 				_cancelGestures();
@@ -447,10 +484,11 @@ TouchGestures.init = function(loopy){
 			if(longPressTimer){
 				_cancelGestures();
 
-				// Single tap - select or deselect
+				// Single tap - select or deselect (priority: nodes > labels > edges)
 				var node = _getNodeAtPoint(coords.x, coords.y);
-				var edge = !node ? _getEdgeAtPoint(coords.x, coords.y) : null;
-				var target = node || edge;
+				var label = !node ? _getLabelAtPoint(coords.x, coords.y) : null;
+				var edge = (!node && !label) ? _getEdgeAtPoint(coords.x, coords.y) : null;
+				var target = node || label || edge;
 
 				if(target){
 					_selectObject(target);

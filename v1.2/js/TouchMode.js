@@ -20,6 +20,7 @@ window.TouchMode = (function(){
 		IDLE: 'idle',
 		SELECTION_ACTIVE: 'selection_active',
 		MOVING_NODE: 'moving_node',
+		MOVING_LABEL: 'moving_label',
 		EDITING_EDGE: 'editing_edge',
 		CREATING_LINK: 'creating_link',
 		PANNING_CANVAS: 'panning_canvas',
