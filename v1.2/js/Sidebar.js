@@ -214,8 +214,8 @@ function Sidebar(loopy){
 		if(toggle){
 			toggle.onclick = function(){
 				document.body.classList.toggle("sidebar-collapsed");
-				// Update arrow direction
-				toggle.innerHTML = document.body.classList.contains("sidebar-collapsed") ? "▶" : "◀";
+				// Update arrow direction: ▶ when visible (to hide), ◀ when hidden (to show)
+				toggle.innerHTML = document.body.classList.contains("sidebar-collapsed") ? "◀" : "▶";
 			};
 		}
 	})();
