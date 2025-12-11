@@ -27,6 +27,9 @@ function Loopy(config){
 	self.offsetY = 0;
 	self.offsetScale = 1;
 
+	// Touch Mode Detection (must be before everything else)
+	TouchMode.init();
+
 	// Mouse
 	Mouse.init(document.getElementById("canvasses")); // TODO: ugly fix, ew
 
