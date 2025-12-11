@@ -109,6 +109,25 @@ function Sidebar(loopy){
 			"(to make a delayed relationship, draw longer arrows)"
 		}));
 		page.addComponent(new ComponentButton({
+			label: "reverse direction ⇄",
+			onclick: function(edge){
+				// Swap from and to nodes
+				var tempFrom = edge.from;
+				edge.from = edge.to;
+				edge.to = tempFrom;
+
+				// Update the config to match
+				edge.config.from = edge.from.id;
+				edge.config.to = edge.to.id;
+
+				// Trigger model update and redraw
+				publish("model/changed");
+				publish("mousemove");
+
+				console.log('Reversed edge direction:', edge.config.from, '→', edge.config.to);
+			}
+		}));
+		page.addComponent(new ComponentButton({
 			//label: "delete edge",
 			label: "delete arrow",
 			//label: "delete relationship",
