@@ -29,8 +29,8 @@ TouchGestures.init = function(loopy){
 	// Configuration
 	var DOUBLE_TAP_DELAY = 300; // ms between taps
 	var DOUBLE_TAP_DISTANCE = 40; // pixels
-	var LONG_PRESS_DELAY = 500; // ms to trigger long press
-	var MOVEMENT_THRESHOLD = 15; // pixels before canceling long press
+	var LONG_PRESS_DELAY = 400; // ms to trigger long press (reduced for responsiveness)
+	var MOVEMENT_THRESHOLD = 40; // pixels before canceling long press (increased for natural wobble)
 	var MIN_PINCH_DISTANCE = 40; // minimum distance between fingers for pinch
 
 	// State tracking
@@ -231,8 +231,9 @@ TouchGestures.init = function(loopy){
 
 				longPressTimer = setTimeout(function(){
 					// Long press triggered - enter move mode
+					longPressTimer = null; // Clear timer so movement isn't cancelled
 					TouchMode.setState(TouchMode.STATE.MOVING_NODE);
-					console.log('TouchGestures: Long press - moving node');
+					console.log('TouchGestures: Long press activated - now moving node:', longPressTarget);
 				}, LONG_PRESS_DELAY);
 			}
 
@@ -312,6 +313,7 @@ TouchGestures.init = function(loopy){
 			if(longPressTimer){
 				var dist = _getDistance(coords.x, coords.y, longPressStartX, longPressStartY);
 				if(dist > MOVEMENT_THRESHOLD){
+					console.log('TouchGestures: Movement exceeded threshold, canceling long-press');
 					_cancelGestures();
 				}
 			}
@@ -349,20 +351,25 @@ TouchGestures.init = function(loopy){
 
 			// If we were moving a node, finalize it
 			if(TouchMode.isState(TouchMode.STATE.MOVING_NODE)){
+				console.log('TouchGestures: Finishing node move/link operation');
 				// Check if we ended on another node (link creation)
 				var targetNode = _getNodeAtPoint(coords.x, coords.y);
+				console.log('TouchGestures: Target node at end:', targetNode, 'Source:', longPressTarget);
+
 				if(targetNode && longPressTarget && targetNode !== longPressTarget){
 					// Create link from longPressTarget to targetNode
 					var edgeConfig = {
 						from: longPressTarget.id,
 						to: targetNode.id
 					};
+					console.log('TouchGestures: Creating link:', edgeConfig);
 					loopy.model.addEdge(edgeConfig);
 					publish("model/changed");
 					publish("mousemove"); // Trigger redraw
-					console.log('TouchGestures: Link created');
+					console.log('TouchGestures: Link created successfully!');
 				} else {
 					// Just moved a node - trigger final redraw
+					console.log('TouchGestures: Just moved node (no link)');
 					publish("mousemove");
 				}
 				TouchMode.resetState();
