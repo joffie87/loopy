@@ -1,8 +1,17 @@
 /**********************************
 
-TOUCH GESTURES
-- Double tap to create node
-- Double tap + hold to start drawing
+TOUCH GESTURES - Comprehensive Implementation
+
+Only active when TouchMode.isTouchMode === true
+Desktop behavior is completely unchanged.
+
+Gestures supported:
+- Pinch: zoom canvas
+- Two-finger drag: pan canvas
+- Single tap: select node/link or deselect
+- Double tap on empty: create node
+- Long press on node: move node
+- Long press + drag to another node: create link
 
 **********************************/
 
@@ -10,8 +19,8 @@ window.TouchGestures = {};
 TouchGestures.init = function(loopy){
 
 	// Early exit if dependencies not available
-	if(typeof _getTotalOffset === 'undefined' || typeof _PADDING === 'undefined'){
-		console.warn('TouchGestures: Dependencies not available, skipping initialization');
+	if(typeof TouchMode === 'undefined'){
+		console.warn('TouchGestures: TouchMode not available, skipping initialization');
 		return;
 	}
 
@@ -19,249 +28,375 @@ TouchGestures.init = function(loopy){
 
 	// Configuration
 	var DOUBLE_TAP_DELAY = 300; // ms between taps
-	var DOUBLE_TAP_DISTANCE = 40; // pixels between tap positions
-	var LONG_PRESS_DELAY = 400; // ms to hold for long press
-	var MOVEMENT_THRESHOLD = 20; // pixels before canceling
+	var DOUBLE_TAP_DISTANCE = 40; // pixels
+	var LONG_PRESS_DELAY = 500; // ms to trigger long press
+	var MOVEMENT_THRESHOLD = 15; // pixels before canceling long press
+	var MIN_PINCH_DISTANCE = 40; // minimum distance between fingers for pinch
 
 	// State tracking
 	var lastTapTime = 0;
 	var lastTapX = 0;
 	var lastTapY = 0;
 	var longPressTimer = null;
-	var isLongPressActive = false;
-	var touchStartX = 0;
-	var touchStartY = 0;
-	var isDrawingFromLongPress = false;
+	var longPressStartX = 0;
+	var longPressStartY = 0;
+	var longPressTarget = null; // node or link being long-pressed
 
-	// Helper: Check if in pen mode
-	var _isInPenMode = function(){
-		return loopy.mode === Loopy.MODE_EDIT && loopy.tool === Loopy.TOOL_INK;
-	};
+	// Pinch/pan state
+	var initialPinchDistance = 0;
+	var initialScale = 1;
+	var lastPanX = 0;
+	var lastPanY = 0;
 
-	// Helper: Get distance between two points
+	/**
+	 * Get distance between two touch points
+	 */
 	var _getDistance = function(x1, y1, x2, y2){
 		var dx = x2 - x1;
 		var dy = y2 - y1;
 		return Math.sqrt(dx*dx + dy*dy);
 	};
 
-	// Helper: Convert touch to canvas coordinates
-	var _getTouchCanvasCoords = function(touch){
-		try {
-			var canvasses = document.getElementById("canvasses");
-			if(!canvasses) return {x: 0, y: 0};
-
-			var offset = _getTotalOffset(canvasses);
-			var x = touch.clientX - offset.left;
-			var y = touch.clientY - offset.top;
-
-			// Apply camera transforms (same as Mouse.js)
-			var tx = 0;
-			var ty = 0;
-			var s = 1/loopy.offsetScale;
-			var CW = canvasses.clientWidth - _PADDING - _PADDING;
-			var CH = canvasses.clientHeight - _PADDING_BOTTOM - _PADDING;
-
-			if(loopy.embedded){
-				tx -= _PADDING/2;
-				ty -= _PADDING/2;
-			}
-
-			tx -= (CW+_PADDING)/2;
-			ty -= (CH+_PADDING)/2;
-
-			tx = s*tx;
-			ty = s*ty;
-
-			tx += (CW+_PADDING)/2;
-			ty += (CH+_PADDING)/2;
-
-			tx -= loopy.offsetX;
-			ty -= loopy.offsetY;
-
-			return {
-				x: x*s + tx,
-				y: y*s + ty
-			};
-		} catch(e) {
-			console.error('TouchGestures: Error in coordinate conversion', e);
-			return {x: 0, y: 0};
-		}
+	/**
+	 * Get midpoint between two touch points
+	 */
+	var _getMidpoint = function(touch1, touch2){
+		return {
+			x: (touch1.clientX + touch2.clientX) / 2,
+			y: (touch1.clientY + touch2.clientY) / 2
+		};
 	};
 
-	// Cancel any pending timers
+	/**
+	 * Convert client coordinates to canvas coordinates
+	 */
+	var _clientToCanvas = function(clientX, clientY){
+		var canvasses = document.getElementById("canvasses");
+		if(!canvasses) return {x: 0, y: 0};
+
+		var rect = canvasses.getBoundingClientRect();
+		var x = clientX - rect.left;
+		var y = clientY - rect.top;
+
+		// Apply camera transforms
+		var tx = 0;
+		var ty = 0;
+		var s = 1/loopy.offsetScale;
+		var CW = canvasses.clientWidth - _PADDING - _PADDING;
+		var CH = canvasses.clientHeight - _PADDING_BOTTOM - _PADDING;
+
+		if(loopy.embedded){
+			tx -= _PADDING/2;
+			ty -= _PADDING/2;
+		}
+
+		tx -= (CW+_PADDING)/2;
+		ty -= (CH+_PADDING)/2;
+
+		tx = s*tx;
+		ty = s*ty;
+
+		tx += (CW+_PADDING)/2;
+		ty += (CH+_PADDING)/2;
+
+		tx -= loopy.offsetX;
+		ty -= loopy.offsetY;
+
+		return {
+			x: x*s + tx,
+			y: y*s + ty
+		};
+	};
+
+	/**
+	 * Find node at given canvas coordinates
+	 */
+	var _getNodeAtPoint = function(canvasX, canvasY){
+		return loopy.model.getNodeByPoint(canvasX, canvasY);
+	};
+
+	/**
+	 * Find edge at given canvas coordinates
+	 */
+	var _getEdgeAtPoint = function(canvasX, canvasY){
+		// Check all edges
+		for(var i=0; i<loopy.model.edges.length; i++){
+			var edge = loopy.model.edges[i];
+			// Simple distance check to edge midpoint
+			// TODO: More accurate edge hit detection
+			var fromNode = loopy.model.getNode(edge.from);
+			var toNode = loopy.model.getNode(edge.to);
+			if(!fromNode || !toNode) continue;
+
+			var midX = (fromNode.x + toNode.x) / 2;
+			var midY = (fromNode.y + toNode.y) / 2;
+			var dist = _getDistance(canvasX, canvasY, midX, midY);
+			if(dist < 30){ // 30px hit radius
+				return edge;
+			}
+		}
+		return null;
+	};
+
+	/**
+	 * Cancel any pending gestures
+	 */
 	var _cancelGestures = function(){
 		if(longPressTimer){
 			clearTimeout(longPressTimer);
 			longPressTimer = null;
 		}
-		isLongPressActive = false;
-		isDrawingFromLongPress = false;
+		longPressTarget = null;
 	};
 
-	// Create a node at the given position
-	var _createNodeAtPosition = function(x, y){
-		if(!loopy.model) return;
+	/**
+	 * Create node at position
+	 */
+	var _createNode = function(canvasX, canvasY){
 		var config = {
-			x: x,
-			y: y
+			x: canvasX,
+			y: canvasY
 		};
 		loopy.model.addNode(config);
 		publish("model/changed");
 	};
 
-	// Start drawing from long press
-	var _startDrawingFromLongPress = function(x, y){
-		isDrawingFromLongPress = true;
-
-		// Simulate mousedown for ink tool
-		Mouse.x = x;
-		Mouse.y = y;
-		Mouse.pressed = true;
-		Mouse.moved = false;
-		Mouse.startedOnTarget = true;
-
-		// Initialize ink stroke
-		if(loopy.ink){
-			loopy.ink.strokeData = [];
-			loopy.ink.strokeData.push([x, y]);
-			loopy.ink.drawInk();
-		}
+	/**
+	 * Select a node or edge
+	 */
+	var _selectObject = function(obj){
+		if(!obj) return;
+		loopy.sidebar.edit(obj);
+		TouchMode.setState(TouchMode.STATE.SELECTION_ACTIVE);
 	};
 
-	// Handle touch start
+	/**
+	 * Deselect everything
+	 */
+	var _deselectAll = function(){
+		loopy.sidebar.showPage("Edit");
+		TouchMode.resetState();
+	};
+
+	// ========================================
+	// TOUCH EVENT HANDLERS
+	// ========================================
+
 	var _onTouchStart = function(event){
-		try {
-			// Only handle in pen mode
-			if(!_isInPenMode()) return;
+		// Only handle when in touch mode
+		if(!TouchMode.isTouchMode) return;
 
-			// Ignore multi-touch (let camera handle it)
-			if(event.touches.length !== 1) return;
+		var touches = event.touches;
+		var now = Date.now();
 
-			var touch = event.touches[0];
-			var coords = _getTouchCanvasCoords(touch);
-			var now = Date.now();
+		// TWO-FINGER GESTURES: Pinch zoom or pan
+		if(touches.length === 2){
+			_cancelGestures();
 
-			touchStartX = coords.x;
-			touchStartY = coords.y;
+			var touch1 = touches[0];
+			var touch2 = touches[1];
+			var distance = _getDistance(touch1.clientX, touch1.clientY,
+			                            touch2.clientX, touch2.clientY);
 
-			// Check if this is a second tap (potential double tap)
+			if(distance > MIN_PINCH_DISTANCE){
+				// Initialize pinch zoom
+				initialPinchDistance = distance;
+				initialScale = loopy.offsetScale;
+				TouchMode.setState(TouchMode.STATE.ZOOMING_CANVAS);
+
+				// Also track for potential pan
+				var mid = _getMidpoint(touch1, touch2);
+				lastPanX = mid.x;
+				lastPanY = mid.y;
+			}
+			return;
+		}
+
+		// SINGLE-FINGER GESTURES
+		if(touches.length === 1){
+			var touch = touches[0];
+			var coords = _clientToCanvas(touch.clientX, touch.clientY);
+
+			// Check if tapping on an object
+			var node = _getNodeAtPoint(coords.x, coords.y);
+			var edge = !node ? _getEdgeAtPoint(coords.x, coords.y) : null;
+			var target = node || edge;
+
+			// Start long-press timer if on a node
+			if(node){
+				longPressStartX = coords.x;
+				longPressStartY = coords.y;
+				longPressTarget = node;
+
+				longPressTimer = setTimeout(function(){
+					// Long press triggered - enter move mode
+					TouchMode.setState(TouchMode.STATE.MOVING_NODE);
+					console.log('TouchGestures: Long press - moving node');
+				}, LONG_PRESS_DELAY);
+			}
+
+			// Track for double-tap detection
 			var timeSinceLastTap = now - lastTapTime;
-			var distanceFromLastTap = _getDistance(coords.x, coords.y, lastTapX, lastTapY);
+			var distanceFromLastTap = _getDistance(touch.clientX, touch.clientY, lastTapX, lastTapY);
 
 			if(timeSinceLastTap < DOUBLE_TAP_DELAY && distanceFromLastTap < DOUBLE_TAP_DISTANCE){
-				// This is the second tap of a double tap
-				// Start long press timer
-				longPressTimer = setTimeout(function(){
-					isLongPressActive = true;
-					_startDrawingFromLongPress(coords.x, coords.y);
-				}, LONG_PRESS_DELAY);
+				// This is a double-tap!
+				_cancelGestures();
 
-				// Reset double tap tracking
+				if(target){
+					// Double-tap on object - treat as interaction (select)
+					_selectObject(target);
+				} else {
+					// Double-tap on empty space - create node
+					_createNode(coords.x, coords.y);
+				}
+
+				// Reset double-tap tracking
 				lastTapTime = 0;
 				lastTapX = 0;
 				lastTapY = 0;
 			} else {
-				// This is a first tap
+				// First tap - record it
 				lastTapTime = now;
-				lastTapX = coords.x;
-				lastTapY = coords.y;
+				lastTapX = touch.clientX;
+				lastTapY = touch.clientY;
 			}
-		} catch(e) {
-			console.error('TouchGestures: Error in touchstart', e);
 		}
 	};
 
-	// Handle touch move
 	var _onTouchMove = function(event){
-		try {
-			// Only handle in pen mode
-			if(!_isInPenMode()) return;
+		// Only handle when in touch mode
+		if(!TouchMode.isTouchMode) return;
 
-			// Ignore multi-touch
-			if(event.touches.length !== 1){
-				_cancelGestures();
-				return;
+		var touches = event.touches;
+
+		// TWO-FINGER: Pinch zoom and/or pan
+		if(touches.length === 2){
+			var touch1 = touches[0];
+			var touch2 = touches[1];
+			var distance = _getDistance(touch1.clientX, touch1.clientY,
+			                            touch2.clientX, touch2.clientY);
+			var mid = _getMidpoint(touch1, touch2);
+
+			// Handle pinch zoom
+			if(TouchMode.isState(TouchMode.STATE.ZOOMING_CANVAS) && initialPinchDistance > 0){
+				var scale = (distance / initialPinchDistance) * initialScale;
+				scale = Math.max(0.25, Math.min(4.0, scale)); // clamp
+				loopy.offsetScale = scale;
 			}
 
-			var touch = event.touches[0];
-			var coords = _getTouchCanvasCoords(touch);
-
-			// If we're drawing from long press, update the stroke
-			if(isDrawingFromLongPress){
-				Mouse.x = coords.x;
-				Mouse.y = coords.y;
-				Mouse.moved = true;
-
-				if(loopy.ink){
-					loopy.ink.drawInk();
-				}
-				return;
+			// Handle two-finger pan
+			if(TouchMode.isState(TouchMode.STATE.ZOOMING_CANVAS)){
+				var deltaX = mid.x - lastPanX;
+				var deltaY = mid.y - lastPanY;
+				loopy.offsetX += deltaX;
+				loopy.offsetY += deltaY;
+				lastPanX = mid.x;
+				lastPanY = mid.y;
 			}
 
-			// If waiting for long press, check if movement cancels it
+			event.preventDefault();
+			return;
+		}
+
+		// SINGLE-FINGER: Move node or create link
+		if(touches.length === 1){
+			var touch = touches[0];
+			var coords = _clientToCanvas(touch.clientX, touch.clientY);
+
+			// Check if we've moved enough to cancel long-press
 			if(longPressTimer){
-				var distance = _getDistance(coords.x, coords.y, touchStartX, touchStartY);
-				if(distance > MOVEMENT_THRESHOLD){
+				var dist = _getDistance(coords.x, coords.y, longPressStartX, longPressStartY);
+				if(dist > MOVEMENT_THRESHOLD){
 					_cancelGestures();
 				}
 			}
-		} catch(e) {
-			console.error('TouchGestures: Error in touchmove', e);
+
+			// If in MOVING_NODE state, move the node
+			if(TouchMode.isState(TouchMode.STATE.MOVING_NODE) && longPressTarget){
+				longPressTarget.x = coords.x;
+				longPressTarget.y = coords.y;
+				publish("model/changed");
+			}
+
+			event.preventDefault();
 		}
 	};
 
-	// Handle touch end
 	var _onTouchEnd = function(event){
-		try {
-			// Only handle in pen mode
-			if(!_isInPenMode()) return;
+		// Only handle when in touch mode
+		if(!TouchMode.isTouchMode) return;
 
-			var coords = null;
-			if(event.changedTouches && event.changedTouches[0]){
-				coords = _getTouchCanvasCoords(event.changedTouches[0]);
-			}
+		var touches = event.touches;
 
-			// If we were drawing from long press, finalize the stroke
-			if(isDrawingFromLongPress){
-				Mouse.pressed = false;
-				Mouse.startedOnTarget = false;
+		// If still touching with one finger after releasing another
+		if(touches.length === 1){
+			// Transition from two-finger back to one-finger
+			_cancelGestures();
+			TouchMode.resetState();
+			return;
+		}
 
-				// Finalize the ink stroke (trigger mouseup logic)
-				if(loopy.ink && loopy.ink.strokeData.length >= 2 && Mouse.moved){
-					publish("mouseup");
+		// All fingers lifted
+		if(touches.length === 0){
+			var changedTouch = event.changedTouches[0];
+			var coords = _clientToCanvas(changedTouch.clientX, changedTouch.clientY);
+
+			// If we were moving a node, finalize it
+			if(TouchMode.isState(TouchMode.STATE.MOVING_NODE)){
+				// Check if we ended on another node (link creation)
+				var targetNode = _getNodeAtPoint(coords.x, coords.y);
+				if(targetNode && longPressTarget && targetNode !== longPressTarget){
+					// Create link from longPressTarget to targetNode
+					var edgeConfig = {
+						from: longPressTarget.id,
+						to: targetNode.id
+					};
+					loopy.model.addEdge(edgeConfig);
+					publish("model/changed");
+					console.log('TouchGestures: Link created');
 				}
-
+				TouchMode.resetState();
 				_cancelGestures();
 				return;
 			}
 
-			// If long press timer is still running, it means finger lifted before long press
-			// This is a plain double tap - create a node
-			if(longPressTimer){
-				clearTimeout(longPressTimer);
-				longPressTimer = null;
-
-				if(coords){
-					_createNodeAtPosition(coords.x, coords.y);
-				}
+			// If we were zooming/panning, just reset
+			if(TouchMode.isState(TouchMode.STATE.ZOOMING_CANVAS)){
+				TouchMode.resetState();
+				initialPinchDistance = 0;
 				return;
 			}
 
-			// Clean up
+			// If long-press timer still running, it was a quick tap
+			if(longPressTimer){
+				_cancelGestures();
+
+				// Single tap - select or deselect
+				var node = _getNodeAtPoint(coords.x, coords.y);
+				var edge = !node ? _getEdgeAtPoint(coords.x, coords.y) : null;
+				var target = node || edge;
+
+				if(target){
+					_selectObject(target);
+				} else {
+					_deselectAll();
+				}
+			}
+
+			TouchMode.resetState();
 			_cancelGestures();
-		} catch(e) {
-			console.error('TouchGestures: Error in touchend', e);
 		}
 	};
 
-	// Attach listeners to canvasses element
+	// Attach event listeners
 	var canvasses = document.getElementById("canvasses");
 	if(canvasses){
-		canvasses.addEventListener("touchstart", _onTouchStart, {passive: true});
-		canvasses.addEventListener("touchmove", _onTouchMove, {passive: true});
-		canvasses.addEventListener("touchend", _onTouchEnd, {passive: true});
-		console.log('TouchGestures: Initialized successfully');
+		// Use passive: false so we can preventDefault
+		canvasses.addEventListener("touchstart", _onTouchStart, {passive: false});
+		canvasses.addEventListener("touchmove", _onTouchMove, {passive: false});
+		canvasses.addEventListener("touchend", _onTouchEnd, {passive: false});
+		console.log('TouchGestures: Comprehensive touch mode initialized');
 	} else {
 		console.warn('TouchGestures: canvasses element not found');
 	}
