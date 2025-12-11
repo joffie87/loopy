@@ -221,6 +221,13 @@ function Sidebar(loopy){
 	(function(){
 		var toggle = document.getElementById("sidebar_toggle");
 		if(toggle){
+			// Auto-collapse sidebar in touch mode for maximum canvas space
+			if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode){
+				document.body.classList.add("sidebar-collapsed");
+				toggle.innerHTML = "◀"; // Show expand arrow
+				console.log("Sidebar: Auto-collapsed in touch mode");
+			}
+
 			toggle.onclick = function(){
 				document.body.classList.toggle("sidebar-collapsed");
 				var isCollapsed = document.body.classList.contains("sidebar-collapsed");

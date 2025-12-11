@@ -214,6 +214,14 @@ body.sidebar-collapsed #sidebar_toggle{
 #sidebar_toggle:hover{
 	background: #ccc;
 }
+
+/* Larger toggle button for touch devices */
+body.touch-mode #sidebar_toggle{
+	width: 40px;
+	height: 80px;
+	font-size: 24px;
+	border-radius: 8px 0 0 8px;
+}
 #sidebar > div{
 	margin: 25px;
 }
