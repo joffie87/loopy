@@ -172,7 +172,7 @@ body.sidebar-collapsed #sidebar{
 #sidebar_toggle{
 	position: absolute;
 	top: 50%;
-	right: calc(100% - 300px); /* Position at left edge of sidebar */
+	right: 300px; /* Position at left edge of sidebar (sidebar width = 300px) */
 	transform: translateY(-50%);
 	width: 30px;
 	height: 60px;
@@ -188,7 +188,7 @@ body.sidebar-collapsed #sidebar{
 	transition: right 0.3s ease;
 }
 
-/* When collapsed, keep arrow visible at right edge */
+/* When collapsed, move arrow to right edge */
 body.sidebar-collapsed #sidebar_toggle{
 	right: 0;
 }
