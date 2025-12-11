@@ -159,6 +159,42 @@ div[big=yes] .play_button_label{
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+
+	transition: transform 0.3s ease;
+}
+
+/* When sidebar is collapsed, slide it off-screen to the right */
+body.sidebar-collapsed #sidebar{
+	transform: translateX(100%);
+}
+
+/* Sidebar toggle arrow */
+#sidebar_toggle{
+	position: absolute;
+	top: 50%;
+	right: calc(100% - 300px); /* Position at left edge of sidebar */
+	transform: translateY(-50%);
+	width: 30px;
+	height: 60px;
+	background: #ddd;
+	border-radius: 5px 0 0 5px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 20px;
+	color: #777;
+	z-index: 100;
+	transition: right 0.3s ease;
+}
+
+/* When collapsed, keep arrow visible at right edge */
+body.sidebar-collapsed #sidebar_toggle{
+	right: 0;
+}
+
+#sidebar_toggle:hover{
+	background: #ccc;
 }
 #sidebar > div{
 	margin: 25px;

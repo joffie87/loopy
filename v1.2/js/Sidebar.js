@@ -208,6 +208,18 @@ function Sidebar(loopy){
 		}
 	});
 
+	// Sidebar toggle
+	(function(){
+		var toggle = document.getElementById("sidebar_toggle");
+		if(toggle){
+			toggle.onclick = function(){
+				document.body.classList.toggle("sidebar-collapsed");
+				// Update arrow direction
+				toggle.innerHTML = document.body.classList.contains("sidebar-collapsed") ? "▶" : "◀";
+			};
+		}
+	})();
+
 }
 
 function SidebarPage(){
