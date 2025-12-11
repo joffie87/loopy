@@ -65,8 +65,13 @@ function Sidebar(loopy){
 			page.getComponent("init").setBGColor(color);
 
 			// Focus on the name field IF IT'S "" or "?"
+			// Skip auto-focus in touch mode to prevent unwanted keyboard
 			var name = node.label;
-			if(name=="" || name=="?") page.getComponent("label").select();
+			var shouldAutoFocus = (name=="" || name=="?");
+			var isDesktop = !(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode);
+			if(shouldAutoFocus && isDesktop){
+				page.getComponent("label").select();
+			}
 
 		};
 		page.addComponent(new ComponentButton({
@@ -132,7 +137,11 @@ function Sidebar(loopy){
 		}));
 		page.onshow = function(){
 			// Focus on the text field
-			page.getComponent("text").select();
+			// Skip auto-focus in touch mode to prevent unwanted keyboard
+			var isDesktop = !(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode);
+			if(isDesktop){
+				page.getComponent("text").select();
+			}
 		};
 		page.onhide = function(){
 			
@@ -212,6 +221,13 @@ function Sidebar(loopy){
 	(function(){
 		var toggle = document.getElementById("sidebar_toggle");
 		if(toggle){
+			// Auto-collapse sidebar in touch mode for maximum canvas space
+			if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode){
+				document.body.classList.add("sidebar-collapsed");
+				toggle.innerHTML = "◀"; // Show expand arrow
+				console.log("Sidebar: Auto-collapsed in touch mode");
+			}
+
 			toggle.onclick = function(){
 				document.body.classList.toggle("sidebar-collapsed");
 				var isCollapsed = document.body.classList.contains("sidebar-collapsed");

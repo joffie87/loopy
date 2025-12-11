@@ -32,6 +32,7 @@ const CORE_ASSETS = [
   './js/Mouse.js',
   './js/Key.js',
   './js/Camera.js',
+  './js/TouchMode.js',
   './js/TouchGestures.js',
   './js/Loopy.js?v=5',
   './js/Model.js?v=3',
