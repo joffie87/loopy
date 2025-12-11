@@ -214,8 +214,14 @@ function Sidebar(loopy){
 		if(toggle){
 			toggle.onclick = function(){
 				document.body.classList.toggle("sidebar-collapsed");
+				var isCollapsed = document.body.classList.contains("sidebar-collapsed");
+
 				// Update arrow direction: ▶ when visible (to hide), ◀ when hidden (to show)
-				toggle.innerHTML = document.body.classList.contains("sidebar-collapsed") ? "◀" : "▶";
+				toggle.innerHTML = isCollapsed ? "◀" : "▶";
+
+				// Debug logging
+				console.log("Sidebar toggle clicked. Collapsed:", isCollapsed);
+				console.log("Body classes:", document.body.className);
 
 				// Trigger resize so canvas updates its dimensions
 				setTimeout(function(){
