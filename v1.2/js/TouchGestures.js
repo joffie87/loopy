@@ -159,6 +159,7 @@ TouchGestures.init = function(loopy){
 		};
 		loopy.model.addNode(config);
 		publish("model/changed");
+		publish("mousemove"); // Trigger immediate redraw
 	};
 
 	/**
@@ -295,6 +296,9 @@ TouchGestures.init = function(loopy){
 				lastPanY = mid.y;
 			}
 
+			// Trigger redraw
+			publish("mousemove");
+
 			event.preventDefault();
 			return;
 		}
@@ -317,6 +321,7 @@ TouchGestures.init = function(loopy){
 				longPressTarget.x = coords.x;
 				longPressTarget.y = coords.y;
 				publish("model/changed");
+				publish("mousemove"); // Trigger redraw
 			}
 
 			event.preventDefault();
@@ -354,7 +359,11 @@ TouchGestures.init = function(loopy){
 					};
 					loopy.model.addEdge(edgeConfig);
 					publish("model/changed");
+					publish("mousemove"); // Trigger redraw
 					console.log('TouchGestures: Link created');
+				} else {
+					// Just moved a node - trigger final redraw
+					publish("mousemove");
 				}
 				TouchMode.resetState();
 				_cancelGestures();
@@ -365,6 +374,7 @@ TouchGestures.init = function(loopy){
 			if(TouchMode.isState(TouchMode.STATE.ZOOMING_CANVAS)){
 				TouchMode.resetState();
 				initialPinchDistance = 0;
+				publish("mousemove"); // Final redraw after zoom/pan
 				return;
 			}
 
