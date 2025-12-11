@@ -149,10 +149,10 @@ function _addMouseEvents(target, onmousedown, onmousemove, onmouseup){
 		// Mouse position
 		var _fakeEvent = {};
 		if(event.changedTouches){
-			// Touch
-			var offset = _getTotalOffset(target);
-			_fakeEvent.x = event.changedTouches[0].clientX - offset.left;
-			_fakeEvent.y = event.changedTouches[0].clientY - offset.top;
+			// Touch - use getBoundingClientRect for accurate mobile positioning
+			var rect = target.getBoundingClientRect();
+			_fakeEvent.x = event.changedTouches[0].clientX - rect.left;
+			_fakeEvent.y = event.changedTouches[0].clientY - rect.top;
 			event.preventDefault();
 		}else{
 			// Not Touch
