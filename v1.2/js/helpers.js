@@ -135,6 +135,11 @@ function _addMouseEvents(target, onmousedown, onmousemove, onmouseup){
 
 	// WRAP THEM CALLBACKS
 	var _onmousedown = function(event){
+		// Skip touch events when in TouchMode (TouchGestures handles all touch)
+		if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode && event.changedTouches){
+			return;
+		}
+
 		// Ignore middle mouse button (used for camera pan)
 		if(event.button === 1) return;
 
@@ -145,6 +150,11 @@ function _addMouseEvents(target, onmousedown, onmousemove, onmouseup){
 		onmousedown(_fakeEvent);
 	};
 	var _onmousemove = function(event){
+
+		// Skip touch events when in TouchMode (TouchGestures handles all touch)
+		if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode && event.changedTouches){
+			return {};
+		}
 
 		// Mouse position
 		var _fakeEvent = {};
@@ -168,6 +178,11 @@ function _addMouseEvents(target, onmousedown, onmousemove, onmouseup){
 
 	};
 	var _onmouseup = function(event){
+		// Skip touch events when in TouchMode (TouchGestures handles all touch)
+		if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode && event.changedTouches){
+			return;
+		}
+
 		var _fakeEvent = {};
 		onmouseup(_fakeEvent);
 	};
