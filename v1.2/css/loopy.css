@@ -173,6 +173,7 @@ div[big=yes] .play_button_label{
 /* When sidebar is collapsed, slide it off-screen to the right */
 body.sidebar-collapsed #sidebar{
 	transform: translateX(100%);
+	pointer-events: none; /* Allow clicks to pass through to canvas */
 }
 
 /* Sidebar toggle arrow */

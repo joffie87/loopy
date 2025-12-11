@@ -216,6 +216,11 @@ function Sidebar(loopy){
 				document.body.classList.toggle("sidebar-collapsed");
 				// Update arrow direction: ▶ when visible (to hide), ◀ when hidden (to show)
 				toggle.innerHTML = document.body.classList.contains("sidebar-collapsed") ? "◀" : "▶";
+
+				// Trigger resize so canvas updates its dimensions
+				setTimeout(function(){
+					publish("resize");
+				}, 50); // Small delay to let CSS transition start
 			};
 		}
 	})();
