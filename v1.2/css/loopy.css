@@ -26,12 +26,13 @@ canvas{
 	top:0; left:0;
 	width: calc(100% - 300px);
 	height: 100%;
+	-webkit-transition: width 0.3s ease;
 	transition: width 0.3s ease;
 }
 
 /* When sidebar is collapsed, expand canvas to full width */
 body.sidebar-collapsed #canvasses{
-	width: 100%;
+	width: 100% !important;
 }
 
 #canvasses[fullscreen=yes]{
@@ -167,14 +168,16 @@ div[big=yes] .play_button_label{
 	-ms-user-select: none;
 	user-select: none;
 
+	-webkit-transition: -webkit-transform 0.3s ease;
 	transition: transform 0.3s ease;
 	z-index: 1000; /* Above canvas */
 }
 
 /* When sidebar is collapsed, slide it off-screen to the right */
 body.sidebar-collapsed #sidebar{
-	transform: translateX(100%);
-	pointer-events: none; /* Allow clicks to pass through to canvas */
+	-webkit-transform: translateX(100%) !important;
+	transform: translateX(100%) !important;
+	pointer-events: none !important; /* Allow clicks to pass through to canvas */
 }
 
 /* Sidebar toggle arrow */
