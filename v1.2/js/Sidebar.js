@@ -220,7 +220,7 @@ function Sidebar(loopy){
 				// Trigger resize so canvas updates its dimensions
 				setTimeout(function(){
 					publish("resize");
-				}, 50); // Small delay to let CSS transition start
+				}, 350); // Wait for CSS transition to complete (300ms + buffer)
 			};
 		}
 	})();
