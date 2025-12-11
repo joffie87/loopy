@@ -87,6 +87,13 @@ window.TouchMode = (function(){
 			self.isTouchMode = hasTouchCapability && (self.hasDetectedTouch || isNarrowViewport);
 		}
 
+		// Update body class for CSS styling
+		if(self.isTouchMode){
+			document.body.classList.add('touch-mode');
+		} else {
+			document.body.classList.remove('touch-mode');
+		}
+
 		// Notify if mode changed
 		if(wasTouchMode !== self.isTouchMode){
 			publish('touchmode/changed', self.isTouchMode);
