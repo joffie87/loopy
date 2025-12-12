@@ -9,8 +9,8 @@
  * - Old caches are automatically cleared on activation
  */
 
-const CACHE_VERSION = 'loopy-pwa-v1.2.4';
-const RUNTIME_CACHE = 'loopy-runtime-v1.2.4';
+const CACHE_VERSION = 'loopy-pwa-v1.2.5';
+const RUNTIME_CACHE = 'loopy-runtime-v1.2.5';
 
 /**
  * Core assets to precache on install
@@ -29,14 +29,14 @@ const CORE_ASSETS = [
   // JavaScript files (with version query params preserved)
   './js/helpers.js',
   './js/minpubsub.js',
-  './js/Mouse.js',
-  './js/Key.js',
+  './js/Mouse.js?v=2',
+  './js/Key.js?v=2',
   './js/Camera.js',
   './js/TouchMode.js',
   './js/TouchGestures.js',
-  './js/SelectionManager.js',
+  './js/SelectionManager.js?v=1',
   './js/Loopy.js?v=5',
-  './js/Model.js?v=3',
+  './js/Model.js?v=4',
   './js/Node.js?v=3',
   './js/Edge.js?v=2',
   './js/Label.js',
