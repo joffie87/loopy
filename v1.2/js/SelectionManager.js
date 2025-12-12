@@ -85,17 +85,22 @@ window.SelectionManager = (function(){
 	self.selectSingle = function(obj){
 		if(!obj) return;
 
+		console.log('SelectionManager: selectSingle called for', obj._CLASS_, obj.id || obj);
+
 		self.clearSelection();
 
 		if(obj._CLASS_ === 'Node'){
 			self.selectedNodes.add(obj.id);
 			self.primarySelection = { type: 'node', id: obj.id };
+			console.log('SelectionManager: Selected node', obj.id, '- total selected:', self.selectedNodes.size);
 		} else if(obj._CLASS_ === 'Edge'){
 			self.selectedEdges.add(obj.id);
 			self.primarySelection = { type: 'edge', id: obj.id };
+			console.log('SelectionManager: Selected edge', obj.id, '- total selected:', self.selectedEdges.size);
 		} else if(obj._CLASS_ === 'Label'){
 			// Labels don't participate in multi-select yet
 			self.primarySelection = { type: 'label', id: obj };
+			console.log('SelectionManager: Selected label');
 		}
 
 		publish('selection/changed');
@@ -107,10 +112,13 @@ window.SelectionManager = (function(){
 	self.toggleSelection = function(obj){
 		if(!obj) return;
 
+		console.log('SelectionManager: toggleSelection called for', obj._CLASS_, obj.id);
+
 		if(obj._CLASS_ === 'Node'){
 			if(self.selectedNodes.has(obj.id)){
 				// Remove from selection
 				self.selectedNodes.delete(obj.id);
+				console.log('SelectionManager: Removed node', obj.id, 'from selection - total:', self.selectedNodes.size);
 
 				// Update primary selection if needed
 				if(self.primarySelection.type === 'node' && self.primarySelection.id === obj.id){
@@ -120,11 +128,13 @@ window.SelectionManager = (function(){
 				// Add to selection
 				self.selectedNodes.add(obj.id);
 				self.primarySelection = { type: 'node', id: obj.id };
+				console.log('SelectionManager: Added node', obj.id, 'to selection - total:', self.selectedNodes.size);
 			}
 		} else if(obj._CLASS_ === 'Edge'){
 			if(self.selectedEdges.has(obj.id)){
 				// Remove from selection
 				self.selectedEdges.delete(obj.id);
+				console.log('SelectionManager: Removed edge', obj.id, 'from selection - total:', self.selectedEdges.size);
 
 				// Update primary selection if needed
 				if(self.primarySelection.type === 'edge' && self.primarySelection.id === obj.id){
@@ -134,6 +144,7 @@ window.SelectionManager = (function(){
 				// Add to selection
 				self.selectedEdges.add(obj.id);
 				self.primarySelection = { type: 'edge', id: obj.id };
+				console.log('SelectionManager: Added edge', obj.id, 'to selection - total:', self.selectedEdges.size);
 			}
 		}
 
@@ -197,8 +208,14 @@ window.SelectionManager = (function(){
 	 * Copy selected nodes and edges to clipboard
 	 */
 	self.copy = function(){
-		if(!loopy) return;
-		if(self.selectedNodes.size === 0) return; // Nothing to copy
+		if(!loopy) {
+			console.log('SelectionManager: Copy - no loopy instance');
+			return;
+		}
+		if(self.selectedNodes.size === 0) {
+			console.log('SelectionManager: Copy - no nodes selected (selectedNodes.size:', self.selectedNodes.size, ')');
+			return; // Nothing to copy
+		}
 
 		console.log('SelectionManager: Copying', self.selectedNodes.size, 'nodes');
 
