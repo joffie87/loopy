@@ -4,11 +4,18 @@ Mouse.init = function(target){
 	// Initialize shiftKey state
 	Mouse.shiftKey = false;
 
+	// Track mouse down position for movement threshold
+	var mouseDownX = 0;
+	var mouseDownY = 0;
+	var MOVEMENT_THRESHOLD = 5; // pixels - must move at least this far to count as "moved"
+
 	// Events!
 	var _onmousedown = function(event){
 		Mouse.moved = false;
 		Mouse.pressed = true;
 		Mouse.startedOnTarget = true;
+		mouseDownX = event.x;
+		mouseDownY = event.y;
 		publish("mousedown");
 	};
 	var _onmousemove = function(event){
@@ -25,10 +32,10 @@ Mouse.init = function(target){
 			tx -= _PADDING/2; // dunno why but this is needed
 			ty -= _PADDING/2; // dunno why but this is needed
 		}
-		
+
 		tx -= (CW+_PADDING)/2;
 		ty -= (CH+_PADDING)/2;
-		
+
 		tx = s*tx;
 		ty = s*ty;
 
@@ -46,7 +53,16 @@ Mouse.init = function(target){
 		Mouse.x = mx;
 		Mouse.y = my;
 
-		Mouse.moved = true;
+		// Only set moved=true if mouse has moved beyond threshold
+		if(Mouse.pressed && !Mouse.moved){
+			var dx = event.x - mouseDownX;
+			var dy = event.y - mouseDownY;
+			var distance = Math.sqrt(dx*dx + dy*dy);
+			if(distance > MOVEMENT_THRESHOLD){
+				Mouse.moved = true;
+			}
+		}
+
 		publish("mousemove");
 
 	};
