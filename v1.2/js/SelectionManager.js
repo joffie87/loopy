@@ -52,6 +52,12 @@ window.SelectionManager = (function(){
 				self.copy();
 			}
 
+			// Ctrl/Cmd + X = Cut
+			if(isCtrlOrCmd && event.keyCode === 88){ // X
+				event.preventDefault();
+				self.cut();
+			}
+
 			// Ctrl/Cmd + V = Paste
 			if(isCtrlOrCmd && event.keyCode === 86){ // V
 				event.preventDefault();
@@ -227,6 +233,56 @@ window.SelectionManager = (function(){
 		};
 
 		console.log('SelectionManager: Copied', nodesToCopy.length, 'nodes and', edgesToCopy.length, 'edges');
+	};
+
+	/**
+	 * Cut selected nodes and edges to clipboard (copy + delete)
+	 */
+	self.cut = function(){
+		if(!loopy) return;
+		if(self.selectedNodes.size === 0) return; // Nothing to cut
+
+		console.log('SelectionManager: Cutting', self.selectedNodes.size, 'nodes');
+
+		// First, copy to clipboard
+		self.copy();
+
+		// Collect nodes and edges to delete
+		var nodesToDelete = [];
+		self.selectedNodes.forEach(function(nodeId){
+			var node = loopy.model.getNode(nodeId);
+			if(node) nodesToDelete.push(node);
+		});
+
+		var edgesToDelete = [];
+		self.selectedEdges.forEach(function(edgeId){
+			var edge = loopy.model.getEdge(edgeId);
+			if(edge) edgesToDelete.push(edge);
+		});
+
+		// Clear selection before deleting
+		self.clearSelection();
+
+		// Delete nodes (this will also kill connected edges)
+		nodesToDelete.forEach(function(node){
+			node.kill();
+		});
+
+		// Delete edges that weren't already killed
+		edgesToDelete.forEach(function(edge){
+			if(loopy.model.edges.indexOf(edge) >= 0){ // Still exists
+				edge.kill();
+			}
+		});
+
+		// Go back to main edit page
+		loopy.sidebar.showPage("Edit");
+
+		// Trigger updates
+		publish('model/changed');
+		publish('mousemove');
+
+		console.log('SelectionManager: Cut complete - deleted', nodesToDelete.length, 'nodes and', edgesToDelete.length, 'edges');
 	};
 
 	/**
