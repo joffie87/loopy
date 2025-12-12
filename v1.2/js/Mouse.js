@@ -51,10 +51,16 @@ Mouse.init = function(target){
 
 	};
 	var _onmouseup = function(){
+		console.log('Mouse: mouseup - moved:', Mouse.moved, 'startedOnTarget:', Mouse.startedOnTarget);
 		Mouse.pressed = false;
 		if(Mouse.startedOnTarget){
 			publish("mouseup");
-			if(!Mouse.moved) publish("mouseclick");
+			if(!Mouse.moved){
+				console.log('Mouse: Publishing mouseclick event');
+				publish("mouseclick");
+			} else {
+				console.log('Mouse: NOT publishing mouseclick (mouse moved)');
+			}
 		}
 		Mouse.moved = false;
 		Mouse.startedOnTarget = false;
