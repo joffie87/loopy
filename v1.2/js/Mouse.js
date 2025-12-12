@@ -1,6 +1,9 @@
 window.Mouse = {};
 Mouse.init = function(target){
 
+	// Initialize shiftKey state
+	Mouse.shiftKey = false;
+
 	// Events!
 	var _onmousedown = function(event){
 		Mouse.moved = false;
