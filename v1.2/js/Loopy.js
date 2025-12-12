@@ -42,6 +42,9 @@ function Loopy(config){
 	// Model
 	self.model = new Model(self);
 
+	// Selection Manager (multi-select & copy/paste)
+	SelectionManager.init(self);
+
 	// Loopy: SPEED!
 	self.signalSpeed = 3;
 

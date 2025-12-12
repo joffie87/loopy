@@ -13,7 +13,42 @@ function Sidebar(loopy){
 	self.edit = function(object){
 		self.showPage(object._CLASS_);
 		self.currentPage.edit(object);
+
+		// Show selection count badge if multiple items selected
+		self.updateSelectionBadge();
 	};
+
+	// Update selection count badge
+	self.updateSelectionBadge = function(){
+		// Remove existing badge if any
+		var existingBadge = document.getElementById("selection_badge");
+		if(existingBadge){
+			existingBadge.remove();
+		}
+
+		// Check selection count
+		if(typeof SelectionManager === 'undefined') return;
+		var count = SelectionManager.getSelectionCount();
+
+		// Show badge if multiple selected
+		if(count > 1){
+			var badge = document.createElement("div");
+			badge.id = "selection_badge";
+			badge.style.cssText = "background:#ffeb3b; color:#000; padding:10px; margin:10px 25px; border-radius:5px; text-align:center; font-weight:bold;";
+			badge.textContent = "(" + count + " items selected)";
+
+			// Insert at top of sidebar content
+			var sidebarContent = self.currentPage.dom;
+			if(sidebarContent && sidebarContent.firstChild){
+				sidebarContent.insertBefore(badge, sidebarContent.firstChild);
+			}
+		}
+	};
+
+	// Listen for selection changes
+	subscribe("selection/changed", function(){
+		self.updateSelectionBadge();
+	});
 
 	// Go back to main when the thing you're editing is killed
 	subscribe("kill",function(object){
