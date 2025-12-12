@@ -140,6 +140,11 @@ function _addMouseEvents(target, onmousedown, onmousemove, onmouseup){
 			return;
 		}
 
+		// Store shift key state for multi-select
+		if(typeof Mouse !== 'undefined'){
+			Mouse.shiftKey = event.shiftKey || false;
+		}
+
 		// Ignore middle mouse button (used for camera pan)
 		if(event.button === 1) return;
 

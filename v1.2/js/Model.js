@@ -430,34 +430,42 @@ function Model(loopy){
 		if(self.loopy.mode!=Loopy.MODE_EDIT) return;
 		if(self.loopy.tool==Loopy.TOOL_ERASE) return;
 
-		// Did you click on a node? If so, edit THAT node.
+		// Check for shift key (multi-select) - desktop only
+		var isShiftClick = Mouse.shiftKey && !(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode);
+
+		// Priority: Node > Label > Edge
 		var clickedNode = self.getNodeByPoint(Mouse.x, Mouse.y);
-		if(clickedNode){
-			loopy.sidebar.edit(clickedNode);
+		var clickedLabel = !clickedNode ? self.getLabelByPoint(Mouse.x, Mouse.y) : null;
+		var clickedEdge = (!clickedNode && !clickedLabel) ? self.getEdgeByPoint(Mouse.x, Mouse.y) : null;
+		var clickedObject = clickedNode || clickedLabel || clickedEdge;
+
+		// Handle selection
+		if(clickedObject){
+			if(isShiftClick){
+				// Shift+click: toggle selection (multi-select)
+				SelectionManager.toggleSelection(clickedObject);
+				// Edit the primary selection
+				var primaryObj = SelectionManager.getPrimaryObject();
+				if(primaryObj){
+					loopy.sidebar.edit(primaryObj);
+				}
+			} else {
+				// Normal click: single select
+				SelectionManager.selectSingle(clickedObject);
+				loopy.sidebar.edit(clickedObject);
+			}
 			return;
 		}
 
-		// Did you click on a label? If so, edit THAT label.
-		var clickedLabel = self.getLabelByPoint(Mouse.x, Mouse.y);
-		if(clickedLabel){
-			loopy.sidebar.edit(clickedLabel);
-			return;
-		}
-
-		// Did you click on an edge label? If so, edit THAT edge.
-		var clickedEdge = self.getEdgeByPoint(Mouse.x, Mouse.y);
-		if(clickedEdge){
-			loopy.sidebar.edit(clickedEdge);
-			return;
-		}
-
+		// Clicked empty space
 		// If the tool LABEL? If so, TRY TO CREATE LABEL.
 		if(self.loopy.tool==Loopy.TOOL_LABEL){
 			loopy.label.tryMakingLabel();
 			return;
 		}
 
-		// Otherwise, go to main Edit page.
+		// Clear selection and go to main Edit page
+		SelectionManager.clearSelection();
 		loopy.sidebar.showPage("Edit");
 
 	});
