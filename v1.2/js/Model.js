@@ -433,16 +433,23 @@ function Model(loopy){
 		// Check for shift key (multi-select) - desktop only
 		var isShiftClick = Mouse.shiftKey && !(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode);
 
+		console.log('Model: Click detected, Mouse.shiftKey:', Mouse.shiftKey, 'isShiftClick:', isShiftClick);
+
 		// Priority: Node > Label > Edge
 		var clickedNode = self.getNodeByPoint(Mouse.x, Mouse.y);
 		var clickedLabel = !clickedNode ? self.getLabelByPoint(Mouse.x, Mouse.y) : null;
 		var clickedEdge = (!clickedNode && !clickedLabel) ? self.getEdgeByPoint(Mouse.x, Mouse.y) : null;
 		var clickedObject = clickedNode || clickedLabel || clickedEdge;
 
+		if(clickedObject){
+			console.log('Model: Clicked', clickedObject._CLASS_, clickedObject.id || clickedObject);
+		}
+
 		// Handle selection
 		if(clickedObject){
 			if(isShiftClick){
 				// Shift+click: toggle selection (multi-select)
+				console.log('Model: Shift-click - toggling selection');
 				SelectionManager.toggleSelection(clickedObject);
 				// Edit the primary selection
 				var primaryObj = SelectionManager.getPrimaryObject();
@@ -451,6 +458,7 @@ function Model(loopy){
 				}
 			} else {
 				// Normal click: single select
+				console.log('Model: Normal click - single select');
 				SelectionManager.selectSingle(clickedObject);
 				loopy.sidebar.edit(clickedObject);
 			}

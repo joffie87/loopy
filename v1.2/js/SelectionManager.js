@@ -46,21 +46,32 @@ window.SelectionManager = (function(){
 			var isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 			var isCtrlOrCmd = isMac ? event.metaKey : event.ctrlKey;
 
+			// Debug logging
+			if(isCtrlOrCmd){
+				console.log('SelectionManager: Key pressed with Ctrl/Cmd:', event.keyCode, 'Key:', event.key);
+			}
+
 			// Ctrl/Cmd + C = Copy
 			if(isCtrlOrCmd && event.keyCode === 67){ // C
+				console.log('SelectionManager: Copy triggered');
 				event.preventDefault();
+				event.stopPropagation();
 				self.copy();
 			}
 
 			// Ctrl/Cmd + X = Cut
 			if(isCtrlOrCmd && event.keyCode === 88){ // X
+				console.log('SelectionManager: Cut triggered');
 				event.preventDefault();
+				event.stopPropagation();
 				self.cut();
 			}
 
 			// Ctrl/Cmd + V = Paste
 			if(isCtrlOrCmd && event.keyCode === 86){ // V
+				console.log('SelectionManager: Paste triggered');
 				event.preventDefault();
+				event.stopPropagation();
 				self.paste();
 			}
 		}, false);

@@ -24,18 +24,34 @@
 	// TODO: cursors stay when click button? orrrrr switch over to fake-cursor.
 	Key.onKeyDown = function(event){
 		if(window.loopy && loopy.modal && loopy.modal.isShowing) return;
+
+		// Skip if Ctrl/Cmd is pressed (allow copy/paste/cut shortcuts)
+		var isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+		var isCtrlOrCmd = isMac ? event.metaKey : event.ctrlKey;
+		if(isCtrlOrCmd) return;
+
 		var code = KEY_CODES[event.keyCode];
-	    Key[code] = true;
-	    publish("key/"+code);
-	    event.stopPropagation();
-	    event.preventDefault();
+		if(code){ // Only handle recognized keys
+			Key[code] = true;
+			publish("key/"+code);
+			event.stopPropagation();
+			event.preventDefault();
+		}
 	}
 	Key.onKeyUp = function(event){
 		if(window.loopy && loopy.modal && loopy.modal.isShowing) return;
+
+		// Skip if Ctrl/Cmd is pressed
+		var isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+		var isCtrlOrCmd = isMac ? event.metaKey : event.ctrlKey;
+		if(isCtrlOrCmd) return;
+
 		var code = KEY_CODES[event.keyCode];
-	    Key[code] = false;
-	    event.stopPropagation();
-	    event.preventDefault();
+		if(code){ // Only handle recognized keys
+			Key[code] = false;
+			event.stopPropagation();
+			event.preventDefault();
+		}
 	}
 	window.addEventListener("keydown",Key.onKeyDown,false);
 	window.addEventListener("keyup",Key.onKeyUp,false);
