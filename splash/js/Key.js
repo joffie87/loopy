@@ -1,3 +1,11 @@
+/*
+@TVN_META
+role: standard
+desc: Key
+last_updated: 2026-02-10
+@END_META
+*/
+
 (function(exports){
 
 	// Singleton

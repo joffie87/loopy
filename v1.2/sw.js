@@ -1,3 +1,11 @@
+/*
+@TVN_META
+role: service_worker
+desc: Service worker
+last_updated: 2026-02-10
+@END_META
+*/
+
 /**
  * Loopy PWA Service Worker
  *

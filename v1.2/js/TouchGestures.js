@@ -1,3 +1,11 @@
+/*
+@TVN_META
+role: standard
+desc: Touch Gestures
+last_updated: 2026-02-10
+@END_META
+*/
+
 /**********************************
 
 TOUCH GESTURES

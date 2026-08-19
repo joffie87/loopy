@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+/*
+@TVN_META
+role: standard
+desc: Generate-Icons
+last_updated: 2026-02-10
+@END_META
+*/
 
 /**
  * PWA Icon Generator for Loopy

@@ -1,3 +1,11 @@
+/*
+@TVN_META
+role: utility
+desc: Helpers utility functions
+last_updated: 2026-02-10
+@END_META
+*/
+
 /*****************************
 
 A miscellaneous collection of reuseable helper methods

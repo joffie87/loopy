@@ -1,3 +1,11 @@
+/*
+@TVN_META
+role: standard
+desc: Page U I
+last_updated: 2026-02-10
+@END_META
+*/
+
 /**********************************
 
 PAGE UI: to extend to Sidebar, Play Controls, Modal.

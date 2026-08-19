@@ -1,3 +1,11 @@
+/*
+@TVN_META
+role: standard
+desc: Minpubsub
+last_updated: 2026-02-10
+@END_META
+*/
+
 /*!
  * MinPubSub
  * Copyright(c) 2011 Daniel Lamb <daniellmb.com>

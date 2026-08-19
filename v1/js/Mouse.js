@@ -1,3 +1,11 @@
+/*
+@TVN_META
+role: standard
+desc: Mouse
+last_updated: 2026-02-10
+@END_META
+*/
+
 window.Mouse = {};
 Mouse.init = function(target){
 

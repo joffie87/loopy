@@ -1,3 +1,11 @@
+/*
+@TVN_META
+role: standard
+desc: Sidebar
+last_updated: 2026-02-10
+@END_META
+*/
+
 /**********************************
 
 SIDEBAR CODE
