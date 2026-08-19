@@ -24,10 +24,17 @@ canvas{
 #canvasses{
 	position:absolute;
 	top:0; left:0;
-	width: 100%; /* Always full width - sidebar overlays on top */
+	width: calc(100% - 300px);
 	height: 100%;
-	pointer-events: auto; /* Enable pointer events on canvas */
+	-webkit-transition: width 0.3s ease;
+	transition: width 0.3s ease;
 }
+
+/* When sidebar is collapsed, expand canvas to full width */
+body.sidebar-collapsed #canvasses{
+	width: 100% !important;
+}
+
 #canvasses[fullscreen=yes]{
 	width: 100%;
 }
@@ -130,6 +137,11 @@ div[big=yes] .play_button_label{
 	display: none;
 }
 
+/* Hide desktop toolbar in touch mode - gestures handle all interactions */
+body.touch-mode #toolbar{
+	display: none;
+}
+
 .toolbar_button{
 	width:60px; height:60px;
 	margin: 5px;
@@ -147,7 +159,7 @@ div[big=yes] .play_button_label{
 **********/
 
 #sidebar{
-	position: fixed;
+	position: absolute;
 	top:0; right:0;
 	width: 300px;
 	height: 100%;
@@ -161,48 +173,54 @@ div[big=yes] .play_button_label{
 	-ms-user-select: none;
 	user-select: none;
 
-	/* Auto-hide functionality */
-	transition: right 0.3s ease-in-out;
-	z-index: 999; /* Ensure sidebar is above canvas */
-	overflow-y: auto; /* Allow scrolling if content is too tall */
+	-webkit-transition: -webkit-transform 0.3s ease;
+	transition: transform 0.3s ease;
+	z-index: 1000; /* Above canvas */
 }
-#sidebar[data-visible=no]{
-	right: -300px;
+
+/* When sidebar is collapsed, slide it off-screen to the right */
+body.sidebar-collapsed #sidebar{
+	-webkit-transform: translateX(100%) !important;
+	transform: translateX(100%) !important;
+	pointer-events: none !important; /* Allow clicks to pass through to canvas */
 }
-#sidebar[data-visible=yes]{
-	right: 0;
-}
+
+/* Sidebar toggle arrow */
 #sidebar_toggle{
-	position: fixed;
-	right: 0;
+	position: absolute;
 	top: 50%;
+	right: 300px; /* Position at left edge of sidebar (sidebar width = 300px) */
 	transform: translateY(-50%);
-	width: 40px;
-	height: 80px;
+	width: 30px;
+	height: 60px;
 	background: #ddd;
-	border-radius: 8px 0 0 8px;
+	border-radius: 5px 0 0 5px;
 	cursor: pointer;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 24px;
+	font-size: 20px;
 	color: #777;
-	transition: right 0.3s ease-in-out, background 0.2s;
-	z-index: 1000;
+	z-index: 1001; /* Above sidebar */
+	transition: right 0.3s ease;
+	pointer-events: auto; /* Ensure arrow stays clickable */
 }
-#sidebar_toggle[data-hidden=no]{
-	right: 300px;
+
+/* When collapsed, move arrow to right edge */
+body.sidebar-collapsed #sidebar_toggle{
+	right: 0;
 }
+
 #sidebar_toggle:hover{
 	background: #ccc;
 }
-/* Play mode styling - needs to check sidebar mode */
-body:has(#sidebar[mode=play]) #sidebar_toggle{
-	background: #222;
-	color: #777;
-}
-body:has(#sidebar[mode=play]) #sidebar_toggle:hover{
-	background: #333;
+
+/* Larger toggle button for touch devices */
+body.touch-mode #sidebar_toggle{
+	width: 40px;
+	height: 80px;
+	font-size: 24px;
+	border-radius: 8px 0 0 8px;
 }
 #sidebar > div{
 	margin: 25px;

@@ -21,7 +21,42 @@ function Sidebar(loopy){
 	self.edit = function(object){
 		self.showPage(object._CLASS_);
 		self.currentPage.edit(object);
+
+		// Show selection count badge if multiple items selected
+		self.updateSelectionBadge();
 	};
+
+	// Update selection count badge
+	self.updateSelectionBadge = function(){
+		// Remove existing badge if any
+		var existingBadge = document.getElementById("selection_badge");
+		if(existingBadge){
+			existingBadge.remove();
+		}
+
+		// Check selection count
+		if(typeof SelectionManager === 'undefined') return;
+		var count = SelectionManager.getSelectionCount();
+
+		// Show badge if multiple selected
+		if(count > 1){
+			var badge = document.createElement("div");
+			badge.id = "selection_badge";
+			badge.style.cssText = "background:#ffeb3b; color:#000; padding:10px; margin:10px 25px; border-radius:5px; text-align:center; font-weight:bold;";
+			badge.textContent = "(" + count + " items selected)";
+
+			// Insert at top of sidebar content
+			var sidebarContent = self.currentPage.dom;
+			if(sidebarContent && sidebarContent.firstChild){
+				sidebarContent.insertBefore(badge, sidebarContent.firstChild);
+			}
+		}
+	};
+
+	// Listen for selection changes
+	subscribe("selection/changed", function(){
+		self.updateSelectionBadge();
+	});
 
 	// Go back to main when the thing you're editing is killed
 	subscribe("kill",function(object){
@@ -73,8 +108,13 @@ function Sidebar(loopy){
 			page.getComponent("init").setBGColor(color);
 
 			// Focus on the name field IF IT'S "" or "?"
+			// Skip auto-focus in touch mode to prevent unwanted keyboard
 			var name = node.label;
-			if(name=="" || name=="?") page.getComponent("label").select();
+			var shouldAutoFocus = (name=="" || name=="?");
+			var isDesktop = !(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode);
+			if(shouldAutoFocus && isDesktop){
+				page.getComponent("label").select();
+			}
 
 		};
 		page.addComponent(new ComponentButton({
@@ -112,6 +152,25 @@ function Sidebar(loopy){
 			"(to make a delayed relationship, draw longer arrows)"
 		}));
 		page.addComponent(new ComponentButton({
+			label: "reverse direction ⇄",
+			onclick: function(edge){
+				// Swap from and to nodes
+				var tempFrom = edge.from;
+				edge.from = edge.to;
+				edge.to = tempFrom;
+
+				// Update the config to match
+				edge.config.from = edge.from.id;
+				edge.config.to = edge.to.id;
+
+				// Trigger model update and redraw
+				publish("model/changed");
+				publish("mousemove");
+
+				console.log('Reversed edge direction:', edge.config.from, '→', edge.config.to);
+			}
+		}));
+		page.addComponent(new ComponentButton({
 			//label: "delete edge",
 			label: "delete arrow",
 			//label: "delete relationship",
@@ -140,7 +199,11 @@ function Sidebar(loopy){
 		}));
 		page.onshow = function(){
 			// Focus on the text field
-			page.getComponent("text").select();
+			// Skip auto-focus in touch mode to prevent unwanted keyboard
+			var isDesktop = !(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode);
+			if(isDesktop){
+				page.getComponent("text").select();
+			}
 		};
 		page.onhide = function(){
 			
@@ -216,31 +279,34 @@ function Sidebar(loopy){
 		}
 	});
 
-	// Sidebar toggle functionality
+	// Sidebar toggle
 	(function(){
 		var toggle = document.getElementById("sidebar_toggle");
-		var sidebar = document.getElementById("sidebar");
-		var isVisible = false;
+		if(toggle){
+			// Auto-collapse sidebar in touch mode for maximum canvas space
+			if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode){
+				document.body.classList.add("sidebar-collapsed");
+				toggle.innerHTML = "◀"; // Show expand arrow
+				console.log("Sidebar: Auto-collapsed in touch mode");
+			}
 
-		if(!toggle || !sidebar){
-			console.error("Sidebar toggle or sidebar element not found!");
-			return;
+			toggle.onclick = function(){
+				document.body.classList.toggle("sidebar-collapsed");
+				var isCollapsed = document.body.classList.contains("sidebar-collapsed");
+
+				// Update arrow direction: ▶ when visible (to hide), ◀ when hidden (to show)
+				toggle.innerHTML = isCollapsed ? "◀" : "▶";
+
+				// Debug logging
+				console.log("Sidebar toggle clicked. Collapsed:", isCollapsed);
+				console.log("Body classes:", document.body.className);
+
+				// Trigger resize so canvas updates its dimensions
+				setTimeout(function(){
+					publish("resize");
+				}, 350); // Wait for CSS transition to complete (300ms + buffer)
+			};
 		}
-
-		// Set initial state
-		toggle.setAttribute("data-hidden", "yes");
-		toggle.innerHTML = "◀";
-
-		toggle.onclick = function(){
-			isVisible = !isVisible;
-			sidebar.setAttribute("data-visible", isVisible ? "yes" : "no");
-			toggle.setAttribute("data-hidden", isVisible ? "no" : "yes");
-			toggle.innerHTML = isVisible ? "▶" : "◀";
-
-			// No need to resize canvas - sidebar overlays on top
-		};
-
-		console.log("Sidebar toggle initialized");
 	})();
 
 }

@@ -9,42 +9,11 @@ last_updated: 2026-02-10
 window.Mouse = {};
 Mouse.init = function(target){
 
-	// Helper function to check if a point is within the sidebar
-	var _isPointInSidebar = function(clientX, clientY){
-		var sidebar = document.getElementById("sidebar");
-		var toggle = document.getElementById("sidebar_toggle");
-
-		// Check if sidebar is visible
-		if(sidebar && sidebar.getAttribute("data-visible") === "yes"){
-			var rect = sidebar.getBoundingClientRect();
-			if(clientX >= rect.left && clientX <= rect.right &&
-			   clientY >= rect.top && clientY <= rect.bottom){
-				return true;
-			}
-		}
-
-		// Check if click is on toggle button
-		if(toggle){
-			var toggleRect = toggle.getBoundingClientRect();
-			if(clientX >= toggleRect.left && clientX <= toggleRect.right &&
-			   clientY >= toggleRect.top && clientY <= toggleRect.bottom){
-				return true;
-			}
-		}
-
-		return false;
-	};
+	// Initialize shiftKey state
+	Mouse.shiftKey = false;
 
 	// Events!
 	var _onmousedown = function(event){
-		// Ignore clicks on sidebar or toggle
-		var clientX = event.clientX || (event.touches && event.touches[0] ? event.touches[0].clientX : 0);
-		var clientY = event.clientY || (event.touches && event.touches[0] ? event.touches[0].clientY : 0);
-
-		if(_isPointInSidebar(clientX, clientY)){
-			return;
-		}
-
 		Mouse.moved = false;
 		Mouse.pressed = true;
 		Mouse.startedOnTarget = true;
@@ -90,10 +59,16 @@ Mouse.init = function(target){
 
 	};
 	var _onmouseup = function(){
+		console.log('Mouse: mouseup - moved:', Mouse.moved, 'startedOnTarget:', Mouse.startedOnTarget);
 		Mouse.pressed = false;
 		if(Mouse.startedOnTarget){
 			publish("mouseup");
-			if(!Mouse.moved) publish("mouseclick");
+			if(!Mouse.moved){
+				console.log('Mouse: Publishing mouseclick event');
+				publish("mouseclick");
+			} else {
+				console.log('Mouse: NOT publishing mouseclick (mouse moved)');
+			}
 		}
 		Mouse.moved = false;
 		Mouse.startedOnTarget = false;

@@ -143,6 +143,16 @@ function _addMouseEvents(target, onmousedown, onmousemove, onmouseup){
 
 	// WRAP THEM CALLBACKS
 	var _onmousedown = function(event){
+		// Skip touch events when in TouchMode (TouchGestures handles all touch)
+		if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode && event.changedTouches){
+			return;
+		}
+
+		// Store shift key state for multi-select
+		if(typeof Mouse !== 'undefined'){
+			Mouse.shiftKey = event.shiftKey || false;
+		}
+
 		// Ignore middle mouse button (used for camera pan)
 		if(event.button === 1) return;
 
@@ -154,13 +164,18 @@ function _addMouseEvents(target, onmousedown, onmousemove, onmouseup){
 	};
 	var _onmousemove = function(event){
 
+		// Skip touch events when in TouchMode (TouchGestures handles all touch)
+		if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode && event.changedTouches){
+			return {};
+		}
+
 		// Mouse position
 		var _fakeEvent = {};
 		if(event.changedTouches){
-			// Touch
-			var offset = _getTotalOffset(target);
-			_fakeEvent.x = event.changedTouches[0].clientX - offset.left;
-			_fakeEvent.y = event.changedTouches[0].clientY - offset.top;
+			// Touch - use getBoundingClientRect for accurate mobile positioning
+			var rect = target.getBoundingClientRect();
+			_fakeEvent.x = event.changedTouches[0].clientX - rect.left;
+			_fakeEvent.y = event.changedTouches[0].clientY - rect.top;
 			event.preventDefault();
 		}else{
 			// Not Touch
@@ -176,6 +191,11 @@ function _addMouseEvents(target, onmousedown, onmousemove, onmouseup){
 
 	};
 	var _onmouseup = function(event){
+		// Skip touch events when in TouchMode (TouchGestures handles all touch)
+		if(typeof TouchMode !== 'undefined' && TouchMode.isTouchMode && event.changedTouches){
+			return;
+		}
+
 		var _fakeEvent = {};
 		onmouseup(_fakeEvent);
 	};
